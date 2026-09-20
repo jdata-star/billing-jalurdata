@@ -1,0 +1,2688 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PT. JALUR DATA INDONESIA - Billing & ISP Management</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Font Awesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- html2pdf.js CDN untuk Ekspor PDF Resmi -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#eef2ff',
+              100: '#e0e7ff',
+              500: '#6366f1',
+              600: '#4f46e5',
+              700: '#4338ca',
+              800: '#3730a3',
+              900: '#312e81',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 4px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: #f1f5f9;
+    }
+    /* Aturan Cetak Presisi */
+    @media print {
+      body * {
+        visibility: hidden;
+      }
+      .no-print {
+        display: none !important;
+      }
+      body.printing-receipt #printableReceipt,
+      body.printing-receipt #printableReceipt * {
+        visibility: visible;
+      }
+      body.printing-receipt #printableReceipt {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        margin: 0;
+        padding: 20px;
+        background: white;
+      }
+      body.printing-report #printableReportArea,
+      body.printing-report #printableReportArea * {
+        visibility: visible;
+      }
+      body.printing-report #printableReportArea {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        margin: 0;
+        padding: 20px;
+        background: white;
+      }
+    }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800 antialiased min-h-screen flex flex-col custom-scrollbar">
+
+  <!-- WRAPPER UTAMA -->
+  <div class="flex h-screen overflow-hidden">
+    
+    <!-- SIDEBAR -->
+    <aside id="mainSidebar" class="w-64 bg-slate-900 text-white flex-shrink-0 flex flex-col justify-between transition-all duration-300 z-30 fixed inset-y-0 left-0 md:static -translate-x-full md:translate-x-0 shadow-xl">
+      <!-- Logo & Nama Usaha -->
+      <div>
+        <div class="p-5 border-b border-slate-800 flex items-center justify-between">
+          <div class="flex items-center space-x-3">
+            <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 to-indigo-400 flex items-center justify-center text-white font-black text-xl shadow-lg shadow-indigo-500/30">
+              <i class="fa-solid fa-wifi"></i>
+            </div>
+            <div>
+              <h1 class="font-bold text-sm leading-tight tracking-wide text-white uppercase" id="sidebarBrandName">PT. JALUR DATA INDONESIA</h1>
+              <p class="text-[11px] text-indigo-300 font-medium">Billing & ISP Manager</p>
+            </div>
+          </div>
+          <button class="md:hidden text-slate-400 hover:text-white" onclick="toggleSidebar()">
+            <i class="fa-solid fa-xmark text-lg"></i>
+          </button>
+        </div>
+
+        <!-- Menu Navigasi -->
+        <nav class="p-3 space-y-1.5 text-sm overflow-y-auto max-h-[calc(100vh-190px)] custom-scrollbar">
+          <a href="#" onclick="switchView('dashboard'); return false;" id="nav-dashboard" class="nav-link flex items-center space-x-3 px-3.5 py-2.5 rounded-xl bg-indigo-600 text-white font-semibold transition-all">
+            <i class="fa-solid fa-chart-pie w-5 text-center"></i>
+            <span>Dashboard</span>
+          </a>
+          <a href="#" onclick="switchView('pelanggan'); return false;" id="nav-pelanggan" class="nav-link flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-slate-300 hover:bg-slate-800 hover:text-white font-medium transition-all">
+            <i class="fa-solid fa-users w-5 text-center"></i>
+            <span>Data Pelanggan</span>
+          </a>
+          <a href="#" onclick="switchView('matriks'); return false;" id="nav-matriks" class="nav-link flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-slate-300 hover:bg-slate-800 hover:text-white font-medium transition-all">
+            <i class="fa-solid fa-table-cells w-5 text-center"></i>
+            <span>Matriks Tagihan</span>
+          </a>
+          <a href="#" onclick="switchView('pembayaran'); return false;" id="nav-pembayaran" class="nav-link flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-slate-300 hover:bg-slate-800 hover:text-white font-medium transition-all">
+            <i class="fa-solid fa-receipt w-5 text-center"></i>
+            <span>Pencatatan Bayar</span>
+          </a>
+          
+          <div class="pt-2 pb-1 px-3 text-[10px] font-bold tracking-wider uppercase text-slate-400">Keuangan & Buku Kas</div>
+          <a href="#" onclick="switchView('kas-masuk'); return false;" id="nav-kas-masuk" class="nav-link flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-slate-300 hover:bg-slate-800 hover:text-white font-medium transition-all">
+            <i class="fa-solid fa-arrow-down-long w-5 text-center text-emerald-400"></i>
+            <span>Kas Masuk</span>
+          </a>
+          <a href="#" onclick="switchView('kas-keluar'); return false;" id="nav-kas-keluar" class="nav-link flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-slate-300 hover:bg-slate-800 hover:text-white font-medium transition-all">
+            <i class="fa-solid fa-arrow-up-long w-5 text-center text-rose-400"></i>
+            <span>Kas Keluar</span>
+          </a>
+          <a href="#" onclick="switchView('laporan'); return false;" id="nav-laporan" class="nav-link flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-slate-300 hover:bg-slate-800 hover:text-white font-medium transition-all">
+            <i class="fa-solid fa-file-invoice-dollar w-5 text-center text-amber-400"></i>
+            <span>Laporan & PDF</span>
+          </a>
+
+          <div class="pt-2 pb-1 px-3 text-[10px] font-bold tracking-wider uppercase text-slate-400">Otomasi & Konfigurasi</div>
+          <a href="#" onclick="switchView('whatsapp'); return false;" id="nav-whatsapp" class="nav-link flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-slate-300 hover:bg-slate-800 hover:text-white font-medium transition-all">
+            <i class="fa-brands fa-whatsapp w-5 text-center text-emerald-400"></i>
+            <span>WhatsApp Tagihan</span>
+          </a>
+          <a href="#" onclick="switchView('pengaturan'); return false;" id="nav-pengaturan" class="nav-link flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-slate-300 hover:bg-slate-800 hover:text-white font-medium transition-all">
+            <i class="fa-solid fa-sliders w-5 text-center"></i>
+            <span>Pengaturan Usaha</span>
+          </a>
+        </nav>
+      </div>
+
+      <!-- Footer Akun Admin -->
+      <div class="p-4 border-t border-slate-800 bg-slate-950/50 flex items-center justify-between">
+        <div class="flex items-center space-x-3 truncate">
+          <div class="w-9 h-9 rounded-full bg-slate-700 border-2 border-indigo-500 flex items-center justify-center font-bold text-xs">
+            <i class="fa-solid fa-user-shield"></i>
+          </div>
+          <div class="truncate">
+            <p class="text-xs font-semibold text-white truncate">Administrator ISP</p>
+            <p class="text-[10px] text-emerald-400 flex items-center gap-1">
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> Online
+            </p>
+          </div>
+        </div>
+        <button onclick="logoutAdmin()" title="Logout" class="text-slate-400 hover:text-rose-400 transition-colors p-1.5">
+          <i class="fa-solid fa-power-off"></i>
+        </button>
+      </div>
+    </aside>
+
+    <!-- KONTEN UTAMA -->
+    <div class="flex-1 flex flex-col min-w-0 overflow-hidden">
+      
+      <!-- TOP HEADER -->
+      <header class="bg-white border-b border-slate-200 h-16 flex items-center justify-between px-4 md:px-8 flex-shrink-0 z-10">
+        <div class="flex items-center space-x-3">
+          <button onclick="toggleSidebar()" class="md:hidden text-slate-600 hover:text-slate-900 p-2 rounded-lg bg-slate-100">
+            <i class="fa-solid fa-bars text-lg"></i>
+          </button>
+          <div>
+            <h2 id="topHeaderTitle" class="text-lg font-bold text-slate-800">Dashboard Manajemen</h2>
+            <p id="topHeaderSubtitle" class="text-xs text-slate-500 hidden sm:block">Sistem Tagihan & Pelanggan RT/RW Net</p>
+          </div>
+        </div>
+
+        <!-- Quick Action & Jam -->
+        <div class="flex items-center space-x-2 md:space-x-3">
+          <div class="hidden lg:flex items-center bg-slate-100 px-3 py-1.5 rounded-lg text-xs font-medium text-slate-600">
+            <i class="fa-regular fa-clock mr-2 text-indigo-600"></i>
+            <span id="liveClock">--:--:-- WIB</span>
+          </div>
+
+          <button onclick="openCustomerModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold px-3 py-2 rounded-lg flex items-center gap-1.5 shadow-sm shadow-indigo-200 transition-all">
+            <i class="fa-solid fa-user-plus"></i>
+            <span class="hidden sm:inline">Tambah Pelanggan</span>
+          </button>
+
+          <button onclick="openPaymentModal()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-3 py-2 rounded-lg flex items-center gap-1.5 shadow-sm shadow-emerald-200 transition-all">
+            <i class="fa-solid fa-money-bill-wave"></i>
+            <span class="hidden sm:inline">Catat Bayar</span>
+          </button>
+        </div>
+      </header>
+
+      <!-- ISI HALAMAN DINAMIS -->
+      <main class="flex-1 overflow-y-auto p-4 md:p-8 bg-slate-50 custom-scrollbar">
+
+        <!-- ================= VIEW 1: DASHBOARD ================= -->
+        <section id="view-dashboard" class="space-y-6">
+          <!-- Kartu Statistik -->
+          <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-5">
+            <!-- Pelanggan Aktif -->
+            <div class="bg-white p-4 md:p-5 rounded-2xl border border-slate-200 shadow-sm relative overflow-hidden">
+              <div class="flex justify-between items-start">
+                <div>
+                  <p class="text-xs font-medium text-slate-500">Pelanggan Aktif</p>
+                  <h3 id="dashActiveClients" class="text-xl md:text-2xl font-bold text-slate-800 mt-1">0</h3>
+                  <p class="text-[11px] text-emerald-600 mt-1 font-semibold flex items-center gap-1">
+                    <i class="fa-solid fa-circle-check"></i> Layanan Aktif
+                  </p>
+                </div>
+                <div class="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center text-lg">
+                  <i class="fa-solid fa-users"></i>
+                </div>
+              </div>
+            </div>
+
+            <!-- Menunggak & Isolir -->
+            <div class="bg-white p-4 md:p-5 rounded-2xl border border-slate-200 shadow-sm relative overflow-hidden">
+              <div class="flex justify-between items-start">
+                <div>
+                  <p class="text-xs font-medium text-slate-500">Menunggak / Isolir</p>
+                  <h3 id="dashUnpaidClients" class="text-xl md:text-2xl font-bold text-rose-600 mt-1">0</h3>
+                  <p class="text-[11px] text-rose-500 mt-1 font-semibold flex items-center gap-1">
+                    <i class="fa-solid fa-triangle-exclamation"></i> Jatuh Tempo
+                  </p>
+                </div>
+                <div class="w-10 h-10 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center text-lg">
+                  <i class="fa-solid fa-user-xmark"></i>
+                </div>
+              </div>
+            </div>
+
+            <!-- Total Pembayaran Diterima -->
+            <div class="bg-white p-4 md:p-5 rounded-2xl border border-slate-200 shadow-sm relative overflow-hidden">
+              <div class="flex justify-between items-start">
+                <div>
+                  <p class="text-xs font-medium text-slate-500">Tagihan Masuk Bulan Ini</p>
+                  <h3 id="dashReceivedIncome" class="text-lg md:text-xl font-bold text-emerald-600 mt-1">Rp 0</h3>
+                  <p id="dashTargetBill" class="text-[11px] text-slate-500 mt-1">dari Target: Rp 0</p>
+                </div>
+                <div class="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-lg">
+                  <i class="fa-solid fa-hand-holding-dollar"></i>
+                </div>
+              </div>
+            </div>
+
+            <!-- Saldo Kas Bersih -->
+            <div class="bg-white p-4 md:p-5 rounded-2xl border border-slate-200 shadow-sm relative overflow-hidden">
+              <div class="flex justify-between items-start">
+                <div>
+                  <p class="text-xs font-medium text-slate-500">Saldo Kas Bersih</p>
+                  <h3 id="dashNetBalance" class="text-lg md:text-xl font-bold text-indigo-700 mt-1">Rp 0</h3>
+                  <p id="dashKasKeluarSummary" class="text-[11px] text-slate-500 mt-1">Beban Operasional: Rp 0</p>
+                </div>
+                <div class="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center text-lg">
+                  <i class="fa-solid fa-wallet"></i>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Grafik Pemasukan & Prioritas Penagihan -->
+          <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- Grafik Baris/Kolom -->
+            <div class="lg:col-span-2 bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+              <div class="flex items-center justify-between mb-4">
+                <div>
+                  <h4 class="font-bold text-slate-800 text-sm md:text-base">Tren Pendapatan & Pengeluaran Bulanan</h4>
+                  <p class="text-xs text-slate-500">Perbandingan riil pemasukan vs beban operasional 6 bulan terakhir</p>
+                </div>
+                <span class="text-xs bg-slate-100 text-slate-600 font-semibold px-2.5 py-1 rounded-md">Tahun 2026</span>
+              </div>
+              <div class="h-64">
+                <canvas id="financialChart"></canvas>
+              </div>
+            </div>
+
+            <!-- Prioritas Penagihan (Menunggak / Isolir) -->
+            <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
+              <div>
+                <div class="flex items-center justify-between mb-3">
+                  <h4 class="font-bold text-slate-800 text-sm md:text-base">Prioritas Penagihan</h4>
+                  <span class="text-[10px] bg-rose-100 text-rose-700 font-bold px-2 py-0.5 rounded-full">Segera Tagih</span>
+                </div>
+                <p class="text-xs text-slate-500 mb-3">Pelanggan yang sudah lewat tempo atau berstatus isolir:</p>
+                <div id="dueClientsList" class="space-y-2.5 max-h-56 overflow-y-auto pr-1 custom-scrollbar text-xs">
+                  <!-- Rendered dynamically -->
+                </div>
+              </div>
+              <button onclick="switchView('whatsapp')" class="mt-4 w-full py-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-bold rounded-xl text-xs flex items-center justify-center gap-2 transition-all">
+                <i class="fa-brands fa-whatsapp text-sm"></i> Kirim Tagihan Massal (Blast)
+              </button>
+            </div>
+          </div>
+
+          <!-- Riwayat Transaksi Pembayaran Terkini -->
+          <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+            <div class="p-5 border-b border-slate-100 flex items-center justify-between">
+              <div>
+                <h4 class="font-bold text-slate-800 text-sm md:text-base">Aktivitas Pembayaran Terkini</h4>
+                <p class="text-xs text-slate-500">Daftar transaksi pelanggan terakhir yang terkonfirmasi</p>
+              </div>
+              <button onclick="switchView('pembayaran')" class="text-xs font-semibold text-indigo-600 hover:text-indigo-800">
+                Lihat Semua <i class="fa-solid fa-arrow-right ml-1"></i>
+              </button>
+            </div>
+            <div class="overflow-x-auto">
+              <table class="w-full text-left text-xs">
+                <thead class="bg-slate-50 text-slate-500 font-semibold border-b border-slate-200 uppercase tracking-wider text-[11px]">
+                  <tr>
+                    <th class="p-3.5">No. Kwitansi</th>
+                    <th class="p-3.5">Pelanggan</th>
+                    <th class="p-3.5">Paket & Periode</th>
+                    <th class="p-3.5">Nominal</th>
+                    <th class="p-3.5">Metode Bayar</th>
+                    <th class="p-3.5">Tanggal</th>
+                    <th class="p-3.5 text-center">Aksi</th>
+                  </tr>
+                </thead>
+                <tbody id="dashRecentPayments" class="divide-y divide-slate-100">
+                  <!-- Rendered dynamically -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+
+        <!-- ================= VIEW 2: DATA PELANGGAN ================= -->
+        <section id="view-pelanggan" class="hidden space-y-5">
+          <!-- Action Bar & Filter -->
+          <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col md:flex-row gap-3 items-center justify-between">
+            <div class="flex flex-wrap items-center gap-2 w-full md:w-auto">
+              <div class="relative w-full sm:w-64">
+                <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+                <input type="text" id="custSearchInput" oninput="renderCustomerTable()" placeholder="Cari ID, Nama, No WA, Paket..." class="w-full pl-9 pr-3 py-2 rounded-xl border border-slate-200 text-xs focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+              </div>
+
+              <!-- Filter Status Tagihan (Termasuk Isolir) -->
+              <select id="custStatusFilter" onchange="renderCustomerTable()" class="py-2 px-3 rounded-xl border border-slate-200 text-xs focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                <option value="all">Semua Status Tagihan</option>
+                <option value="Lunas">Lunas</option>
+                <option value="Belum Bayar">Belum Bayar</option>
+                <option value="Menunggu Verifikasi">Menunggu Verifikasi</option>
+                <option value="Menunggak">Menunggak</option>
+                <option value="Isolir">Isolir</option>
+              </select>
+
+              <!-- Filter Paket -->
+              <select id="custPackageFilter" onchange="renderCustomerTable()" class="py-2 px-3 rounded-xl border border-slate-200 text-xs focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                <option value="all">Semua Paket Internet</option>
+                <option value="10 Mbps">10 Mbps</option>
+                <option value="20 Mbps">20 Mbps</option>
+                <option value="30 Mbps">30 Mbps</option>
+                <option value="50 Mbps">50 Mbps</option>
+              </select>
+            </div>
+
+            <!-- Tombol Tambah, Ekspor & Impor -->
+            <div class="flex items-center gap-2 w-full md:w-auto justify-end">
+              <button onclick="downloadCustomerTemplateCSV()" title="Unduh format tabel CSV" class="py-2 px-3 rounded-xl border border-slate-300 text-slate-600 hover:bg-slate-50 text-xs font-semibold flex items-center gap-1.5">
+                <i class="fa-solid fa-file-excel text-emerald-600"></i> Template CSV
+              </button>
+              <label class="cursor-pointer py-2 px-3 rounded-xl border border-slate-300 text-slate-600 hover:bg-slate-50 text-xs font-semibold flex items-center gap-1.5">
+                <i class="fa-solid fa-file-import text-blue-600"></i> Impor
+                <input type="file" id="csvFileInput" accept=".csv" class="hidden" onchange="importCustomerCSV(event)">
+              </label>
+              <button onclick="exportCustomerCSV()" class="py-2 px-3 rounded-xl border border-slate-300 text-slate-600 hover:bg-slate-50 text-xs font-semibold flex items-center gap-1.5">
+                <i class="fa-solid fa-file-export text-indigo-600"></i> Ekspor
+              </button>
+              <button onclick="openCustomerModal()" class="py-2 px-3.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold flex items-center gap-1.5 shadow-sm shadow-indigo-200">
+                <i class="fa-solid fa-plus"></i> Pelanggan Baru
+              </button>
+            </div>
+          </div>
+
+          <!-- Tabel Pelanggan -->
+          <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+            <div class="overflow-x-auto">
+              <table class="w-full text-left text-xs">
+                <thead class="bg-slate-50 text-slate-500 font-semibold border-b border-slate-200 uppercase tracking-wider text-[11px]">
+                  <tr>
+                    <th class="p-3.5">ID / Nama</th>
+                    <th class="p-3.5">Kontak & Alamat</th>
+                    <th class="p-3.5">Paket & Biaya</th>
+                    <th class="p-3.5">Tgl Pasang</th>
+                    <th class="p-3.5">Jatuh Tempo</th>
+                    <th class="p-3.5">Status Tagihan</th>
+                    <th class="p-3.5 text-center">Bayar Cepat</th>
+                    <th class="p-3.5 text-center">Aksi</th>
+                  </tr>
+                </thead>
+                <tbody id="customerTableBody" class="divide-y divide-slate-100">
+                  <!-- Rendered dynamically -->
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Footer Pagination / Info -->
+            <div class="p-4 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500 gap-2">
+              <div id="custTableCountInfo">Menampilkan 0 dari 0 pelanggan</div>
+              <div class="flex items-center space-x-1" id="custPaginationControls">
+                <!-- Pagination buttons -->
+              </div>
+            </div>
+          </div>
+        </section>
+
+
+        <!-- ================= VIEW 3: MATRIKS TAGIHAN ================= -->
+        <section id="view-matriks" class="hidden space-y-5">
+          <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4">
+              <div>
+                <h3 class="font-bold text-slate-800 text-base">Matriks Status Tagihan Bulanan (2026)</h3>
+                <p class="text-xs text-slate-500">Pantau kepatuhan iuran seluruh pelanggan dari Januari hingga Desember</p>
+              </div>
+
+              <!-- Legenda Indikator -->
+              <div class="flex flex-wrap items-center gap-3 text-xs">
+                <div class="flex items-center gap-1.5"><span class="w-3 h-3 rounded bg-emerald-500"></span> <span>Lunas</span></div>
+                <div class="flex items-center gap-1.5"><span class="w-3 h-3 rounded bg-amber-400"></span> <span>Menunggu</span></div>
+                <div class="flex items-center gap-1.5"><span class="w-3 h-3 rounded bg-rose-500"></span> <span>Menunggak</span></div>
+                <div class="flex items-center gap-1.5"><span class="w-3 h-3 rounded bg-purple-600"></span> <span>Isolir</span></div>
+                <div class="flex items-center gap-1.5"><span class="w-3 h-3 rounded bg-slate-300"></span> <span>Nonaktif</span></div>
+              </div>
+            </div>
+
+            <!-- Filter Matriks -->
+            <div class="flex items-center gap-3 mb-4">
+              <input type="text" id="matrixSearchInput" oninput="renderMatrixTable()" placeholder="Cari nama pelanggan..." class="py-1.5 px-3 rounded-lg border border-slate-200 text-xs focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+              <select id="matrixYearFilter" class="py-1.5 px-3 rounded-lg border border-slate-200 text-xs font-semibold">
+                <option value="2026">Tahun 2026</option>
+              </select>
+            </div>
+
+            <!-- Tabel Matriks Grid -->
+            <div class="overflow-x-auto border border-slate-200 rounded-xl">
+              <table class="w-full text-center text-xs border-collapse min-w-[800px]">
+                <thead class="bg-slate-800 text-white font-semibold">
+                  <tr>
+                    <th class="p-2.5 text-left border-r border-slate-700">Nama Pelanggan</th>
+                    <th class="p-2.5">Jan</th>
+                    <th class="p-2.5">Feb</th>
+                    <th class="p-2.5">Mar</th>
+                    <th class="p-2.5">Apr</th>
+                    <th class="p-2.5">Mei</th>
+                    <th class="p-2.5">Jun</th>
+                    <th class="p-2.5">Jul</th>
+                    <th class="p-2.5">Agu</th>
+                    <th class="p-2.5">Sep</th>
+                    <th class="p-2.5">Okt</th>
+                    <th class="p-2.5">Nov</th>
+                    <th class="p-2.5">Des</th>
+                  </tr>
+                </thead>
+                <tbody id="matrixTableBody" class="divide-y divide-slate-100">
+                  <!-- Rendered dynamically -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+
+        <!-- ================= VIEW 4: PENCATATAN PEMBAYARAN ================= -->
+        <section id="view-pembayaran" class="hidden space-y-5">
+          <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col md:flex-row justify-between items-center gap-3">
+            <div>
+              <h3 class="font-bold text-slate-800 text-base">Riwayat Transaksi & Pembayaran Tagihan</h3>
+              <p class="text-xs text-slate-500">Semua riwayat setoran iuran pelanggan yang tercatat di sistem</p>
+            </div>
+            <div class="flex items-center gap-2">
+              <button onclick="exportPaymentsCSV()" class="py-2 px-3 rounded-xl border border-slate-300 text-slate-600 hover:bg-slate-50 text-xs font-semibold flex items-center gap-1.5">
+                <i class="fa-solid fa-download"></i> Ekspor CSV
+              </button>
+              <button onclick="openPaymentModal()" class="py-2 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold flex items-center gap-1.5 shadow-sm shadow-emerald-200">
+                <i class="fa-solid fa-plus"></i> Catat Pembayaran Baru
+              </button>
+            </div>
+          </div>
+
+          <!-- Tabel Pembayaran -->
+          <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+            <div class="overflow-x-auto">
+              <table class="w-full text-left text-xs">
+                <thead class="bg-slate-50 text-slate-500 font-semibold border-b border-slate-200 uppercase tracking-wider text-[11px]">
+                  <tr>
+                    <th class="p-3.5">ID Kuitansi</th>
+                    <th class="p-3.5">Nama Pelanggan</th>
+                    <th class="p-3.5">Periode / Durasi</th>
+                    <th class="p-3.5">Nominal Bayar</th>
+                    <th class="p-3.5">Tgl Bayar</th>
+                    <th class="p-3.5">Metode Bayar</th>
+                    <th class="p-3.5">Status</th>
+                    <th class="p-3.5 text-center">Kuitansi / Cetak</th>
+                  </tr>
+                </thead>
+                <tbody id="paymentHistoryBody" class="divide-y divide-slate-100">
+                  <!-- Rendered dynamically -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+
+        <!-- ================= VIEW 5: KAS MASUK ================= -->
+        <section id="view-kas-masuk" class="hidden space-y-5">
+          <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col md:flex-row justify-between items-center gap-3">
+            <div>
+              <h3 class="font-bold text-slate-800 text-base">Buku Kas Masuk (Pemasukan Usaha)</h3>
+              <p class="text-xs text-slate-500">Iuran pelanggan, biaya registrasi pemasangan baru, dan penjualan voucher</p>
+            </div>
+            <button onclick="openKasModal('masuk')" class="py-2 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold flex items-center gap-1.5 shadow-sm shadow-emerald-200">
+              <i class="fa-solid fa-plus"></i> Tambah Kas Masuk
+            </button>
+          </div>
+
+          <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+            <div class="overflow-x-auto">
+              <table class="w-full text-left text-xs">
+                <thead class="bg-slate-50 text-slate-500 font-semibold border-b border-slate-200 uppercase tracking-wider text-[11px]">
+                  <tr>
+                    <th class="p-3.5">Tanggal</th>
+                    <th class="p-3.5">Kategori</th>
+                    <th class="p-3.5">Sumber / Referensi</th>
+                    <th class="p-3.5">Keterangan</th>
+                    <th class="p-3.5 text-right">Nominal</th>
+                  </tr>
+                </thead>
+                <tbody id="kasMasukTableBody" class="divide-y divide-slate-100">
+                  <!-- Rendered dynamically -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+
+        <!-- ================= VIEW 6: KAS KELUAR ================= -->
+        <section id="view-kas-keluar" class="hidden space-y-5">
+          <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col md:flex-row justify-between items-center gap-3">
+            <div>
+              <h3 class="font-bold text-slate-800 text-base">Buku Kas Keluar (Beban Operasional)</h3>
+              <p class="text-xs text-slate-500">Tagihan Bandwidth Induk (ISP), Listrik PLN, Maintenance Kabel/OLT, dan Gaji Teknisi</p>
+            </div>
+            <button onclick="openKasModal('keluar')" class="py-2 px-4 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold flex items-center gap-1.5 shadow-sm shadow-rose-200">
+              <i class="fa-solid fa-plus"></i> Catat Kas Keluar
+            </button>
+          </div>
+
+          <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+            <div class="overflow-x-auto">
+              <table class="w-full text-left text-xs">
+                <thead class="bg-slate-50 text-slate-500 font-semibold border-b border-slate-200 uppercase tracking-wider text-[11px]">
+                  <tr>
+                    <th class="p-3.5">Tanggal</th>
+                    <th class="p-3.5">Kategori Pengeluaran</th>
+                    <th class="p-3.5">Penerima</th>
+                    <th class="p-3.5">Deskripsi / Bukti</th>
+                    <th class="p-3.5 text-right">Nominal</th>
+                  </tr>
+                </thead>
+                <tbody id="kasKeluarTableBody" class="divide-y divide-slate-100">
+                  <!-- Rendered dynamically -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+
+        <!-- ================= VIEW 7: LAPORAN & PDF ================= -->
+        <section id="view-laporan" class="hidden space-y-6">
+          <!-- Filter Panel Laporan -->
+          <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+            <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 border-b border-slate-100 pb-4 mb-4">
+              <div>
+                <h3 class="font-bold text-slate-800 text-base">Laporan Setoran Pelanggan & Keuangan Bulanan</h3>
+                <p class="text-xs text-slate-500">Filter data berdasarkan bulan setoran untuk cetak berkas kuitansi/laporan A4</p>
+              </div>
+              <div class="flex items-center gap-2">
+                <button onclick="exportMonthlyReportToPDF()" class="py-2 px-4 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold flex items-center gap-1.5 shadow-sm shadow-rose-200">
+                  <i class="fa-solid fa-file-pdf"></i> Unduh PDF Resmi
+                </button>
+                <button onclick="printMonthlyReport()" class="py-2 px-4 rounded-xl bg-slate-800 hover:bg-slate-900 text-white text-xs font-bold flex items-center gap-1.5 shadow-sm">
+                  <i class="fa-solid fa-print"></i> Cetak Printer
+                </button>
+              </div>
+            </div>
+
+            <!-- Form Filter Bulan & Metode Bayar -->
+            <div class="grid grid-cols-1 sm:grid-cols-4 gap-3">
+              <div>
+                <label class="block text-[11px] font-semibold text-slate-500 mb-1">Pilih Bulan</label>
+                <select id="reportMonthSelect" onchange="renderMonthlyReport()" class="w-full p-2 border border-slate-200 rounded-lg text-xs font-medium focus:ring-2 focus:ring-indigo-500">
+                  <option value="1">Januari</option>
+                  <option value="2">Februari</option>
+                  <option value="3">Maret</option>
+                  <option value="4">April</option>
+                  <option value="5">Mei</option>
+                  <option value="6">Juni</option>
+                  <option value="7">Juli</option>
+                  <option value="8">Agustus</option>
+                  <option value="9" selected>September</option>
+                  <option value="10">Oktober</option>
+                  <option value="11">November</option>
+                  <option value="12">Desember</option>
+                </select>
+              </div>
+
+              <div>
+                <label class="block text-[11px] font-semibold text-slate-500 mb-1">Tahun</label>
+                <select id="reportYearSelect" onchange="renderMonthlyReport()" class="w-full p-2 border border-slate-200 rounded-lg text-xs font-medium focus:ring-2 focus:ring-indigo-500">
+                  <option value="2026" selected>2026</option>
+                </select>
+              </div>
+
+              <div>
+                <label class="block text-[11px] font-semibold text-slate-500 mb-1">Metode Pembayaran</label>
+                <select id="reportMethodFilter" onchange="renderMonthlyReport()" class="w-full p-2 border border-slate-200 rounded-lg text-xs font-medium focus:ring-2 focus:ring-indigo-500">
+                  <option value="all">Semua Metode</option>
+                  <option value="Tunai">Tunai (Cash)</option>
+                  <option value="Transfer BCA">Transfer BCA</option>
+                  <option value="Transfer SeaBank">Transfer SeaBank</option>
+                  <option value="QRIS">QRIS</option>
+                </select>
+              </div>
+
+              <div class="flex items-end">
+                <button onclick="renderMonthlyReport()" class="w-full py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold rounded-lg text-xs flex items-center justify-center gap-1.5 transition-all">
+                  <i class="fa-solid fa-arrows-rotate"></i> Muat Ulang Data
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- AREA RESMI CETAK & PDF (PRINTABLE REPORT) -->
+          <div id="printableReportArea" class="bg-white p-6 md:p-8 rounded-2xl border border-slate-200 shadow-sm">
+            <!-- Kop Surat Resmi -->
+            <div class="border-b-2 border-slate-800 pb-4 mb-6">
+              <div class="flex justify-between items-start">
+                <div>
+                  <h2 class="text-xl font-black text-slate-900 uppercase tracking-wide" id="reportCompanyTitle">PT. JALUR DATA INDONESIA</h2>
+                  <p class="text-xs font-semibold text-indigo-700 mt-0.5">LAYANAN PENYEDIA INTERNET RT/RW NET BERKUALITAS</p>
+                  <p class="text-[11px] text-slate-600 mt-1 max-w-xl" id="reportCompanyAddress">
+                    Jl. AMD RT 010 RW 03 No 35 Banyumas Kec. Banyumas Kab. Pringsewu (depan PERTASHOP)
+                  </p>
+                  <p class="text-[11px] text-slate-500">WhatsApp Pelayanan: 0812-3456-7890 | Email: billing@jalurdata.id</p>
+                </div>
+                <div class="text-right">
+                  <span class="inline-block px-3 py-1 bg-indigo-50 border border-indigo-200 text-indigo-800 font-bold text-xs rounded-lg uppercase">
+                    Laporan Rekapitulasi
+                  </span>
+                  <p class="text-xs font-semibold text-slate-700 mt-2">Periode: <span id="reportDisplayPeriod">September 2026</span></p>
+                  <p class="text-[10px] text-slate-400">Dicetak: <span id="reportPrintDate">20/09/2026</span></p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Ringkasan Finansial Periode Terpilih -->
+            <div class="grid grid-cols-3 gap-4 mb-6">
+              <div class="p-3.5 bg-slate-50 rounded-xl border border-slate-200">
+                <p class="text-[11px] font-semibold text-slate-500 uppercase">Total Setoran Pelanggan</p>
+                <p id="reportTotalPaid" class="text-base md:text-lg font-black text-emerald-600 mt-0.5">Rp 0</p>
+                <p id="reportPaidClientCount" class="text-[10px] text-slate-500">0 Pelanggan Membayar</p>
+              </div>
+              <div class="p-3.5 bg-slate-50 rounded-xl border border-slate-200">
+                <p class="text-[11px] font-semibold text-slate-500 uppercase">Pengeluaran Operasional</p>
+                <p id="reportTotalExpense" class="text-base md:text-lg font-black text-rose-600 mt-0.5">Rp 0</p>
+                <p class="text-[10px] text-slate-500">Bandwidth, Listrik & Teknisi</p>
+              </div>
+              <div class="p-3.5 bg-slate-50 rounded-xl border border-slate-200">
+                <p class="text-[11px] font-semibold text-slate-500 uppercase">Surplus / Laba Bersih</p>
+                <p id="reportNetProfit" class="text-base md:text-lg font-black text-indigo-700 mt-0.5">Rp 0</p>
+                <p class="text-[10px] text-emerald-600 font-semibold">Keuntungan Periode Ini</p>
+              </div>
+            </div>
+
+            <!-- Tabel Daftar Pelanggan Yang Membayar -->
+            <div class="mb-6">
+              <h4 class="font-bold text-slate-800 text-xs uppercase tracking-wider mb-2">Rincian Pelanggan Yang Membayar</h4>
+              <table class="w-full text-left text-xs border border-slate-200">
+                <thead class="bg-slate-100 text-slate-700 font-bold border-b border-slate-200">
+                  <tr>
+                    <th class="p-2 border-r border-slate-200">No</th>
+                    <th class="p-2 border-r border-slate-200">Kwitansi</th>
+                    <th class="p-2 border-r border-slate-200">ID & Nama Pelanggan</th>
+                    <th class="p-2 border-r border-slate-200">Paket</th>
+                    <th class="p-2 border-r border-slate-200">Durasi / Periode</th>
+                    <th class="p-2 border-r border-slate-200">Tgl Bayar</th>
+                    <th class="p-2 border-r border-slate-200">Metode</th>
+                    <th class="p-2 text-right">Nominal</th>
+                  </tr>
+                </thead>
+                <tbody id="reportPaidTableBody" class="divide-y divide-slate-100">
+                  <!-- Rendered dynamically -->
+                </tbody>
+                <tfoot class="bg-slate-50 font-bold border-t-2 border-slate-300">
+                  <tr>
+                    <td colspan="7" class="p-2 text-right uppercase text-[11px]">Total Penerimaan Setoran:</td>
+                    <td id="reportTableFooterTotal" class="p-2 text-right text-emerald-700 font-black">Rp 0</td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+
+            <!-- Lembar Tanda Tangan Resmi Pengelola -->
+            <div class="mt-8 pt-4 border-t border-slate-200 flex justify-between items-center text-xs">
+              <div>
+                <p class="text-[11px] text-slate-500">Status Dokumen: <span class="text-emerald-600 font-bold">Terverifikasi Sistem Otomatis</span></p>
+                <p class="text-[10px] text-slate-400">Dicetak melalui Sistem Billing PT. JALUR DATA INDONESIA</p>
+              </div>
+              <div class="text-center w-52">
+                <p class="text-slate-600 text-[11px]">Pringsewu, <span id="signatureDate">20 September 2026</span></p>
+                <p class="font-bold text-slate-800 text-[11px] mt-0.5">Penanggung Jawab / Admin,</p>
+                <div class="h-16 flex items-end justify-center">
+                  <span class="text-[10px] text-slate-400 italic">( Tanda Tangan & Cap Usaha )</span>
+                </div>
+                <p class="font-bold text-slate-900 border-t border-slate-400 pt-1 text-[11px]">PT. JALUR DATA INDONESIA</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+
+        <!-- ================= VIEW 8: WHATSAPP ================= -->
+        <section id="view-whatsapp" class="hidden space-y-5">
+          <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- Form Template Pesan -->
+            <div class="lg:col-span-2 bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+              <div class="border-b border-slate-100 pb-3 flex justify-between items-center">
+                <div>
+                  <h3 class="font-bold text-slate-800 text-base">Format Template Notifikasi WhatsApp</h3>
+                  <p class="text-xs text-slate-500">Sesuaikan template pesan otomatis dengan variabel sistem</p>
+                </div>
+                <button onclick="saveWhatsAppTemplates()" class="py-1.5 px-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-bold">
+                  Simpan Template
+                </button>
+              </div>
+
+              <!-- Template 1: Tagihan Bulanan -->
+              <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1">1. Template Penagihan (Jatuh Tempo / Menunggak / Isolir)</label>
+                <textarea id="waBillingTemplate" rows="5" class="w-full p-3 border border-slate-200 rounded-xl text-xs font-mono focus:ring-2 focus:ring-indigo-500 leading-relaxed"></textarea>
+                <p class="text-[10px] text-slate-400 mt-1">Variabel tersedia: <span class="font-semibold text-indigo-600">{{nama_pelanggan}}, {{id_pelanggan}}, {{paket}}, {{nominal}}, {{jatuh_tempo}}, {{periode}}, {{rekening_pembayaran}}</span></p>
+              </div>
+
+              <!-- Template 2: Ucapan Terima Kasih -->
+              <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1">2. Template Konfirmasi Pembayaran (Kuitansi Lunas)</label>
+                <textarea id="waThanksTemplate" rows="4" class="w-full p-3 border border-slate-200 rounded-xl text-xs font-mono focus:ring-2 focus:ring-indigo-500 leading-relaxed"></textarea>
+                <p class="text-[10px] text-slate-400 mt-1">Variabel: <span class="font-semibold text-indigo-600">{{nama_pelanggan}}, {{nominal}}, {{periode}}, {{no_kwitansi}}, {{tgl_bayar}}</span></p>
+              </div>
+
+              <!-- Blast WhatsApp Massal -->
+              <div class="p-4 bg-emerald-50 rounded-xl border border-emerald-200 flex flex-col sm:flex-row items-center justify-between gap-3">
+                <div>
+                  <h4 class="text-xs font-bold text-emerald-900">Broadcast Tagihan Massal</h4>
+                  <p class="text-[11px] text-emerald-700">Kirim pesan tagihan otomatis ke seluruh pelanggan menunggak & isolir</p>
+                </div>
+                <button onclick="blastWhatsAppUnpaid()" class="py-2 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold flex items-center gap-2 shadow-sm shadow-emerald-200 whitespace-nowrap">
+                  <i class="fa-brands fa-whatsapp text-sm"></i> Kirim Tagihan Sekarang
+                </button>
+              </div>
+            </div>
+
+            <!-- Log Pesan Terkirim -->
+            <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
+              <div>
+                <h4 class="font-bold text-slate-800 text-sm mb-1">Riwayat Pengiriman WA</h4>
+                <p class="text-xs text-slate-500 mb-3">Aktivitas pesan keluar via WhatsApp Web</p>
+                <div id="waLogList" class="space-y-2.5 max-h-96 overflow-y-auto pr-1 text-xs custom-scrollbar">
+                  <!-- Rendered dynamically -->
+                </div>
+              </div>
+              <button onclick="clearWaLogs()" class="mt-3 text-[11px] text-slate-400 hover:text-rose-500 text-center">
+                Bersihkan Riwayat Log
+              </button>
+            </div>
+          </div>
+        </section>
+
+
+        <!-- ================= VIEW 9: PENGATURAN USAHA ================= -->
+        <section id="view-pengaturan" class="hidden space-y-5">
+          <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm max-w-4xl space-y-6">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-4">
+              <div>
+                <h3 class="font-bold text-slate-800 text-base">Profil Usaha & Rekening Penerimaan</h3>
+                <p class="text-xs text-slate-500">Konfigurasi kop surat kuitansi, alamat kantor sekretariat, dan data perbankan</p>
+              </div>
+              <!-- Tombol Kembali ke Dashboard -->
+              <button type="button" onclick="switchView('dashboard')" class="py-2 px-4 rounded-xl border border-slate-300 text-slate-700 hover:bg-slate-100 text-xs font-bold flex items-center gap-1.5 transition-all">
+                <i class="fa-solid fa-arrow-left"></i> Kembali ke Dashboard
+              </button>
+            </div>
+
+            <form id="settingsForm" onsubmit="saveCompanySettings(event)" class="space-y-4">
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label class="block text-xs font-bold text-slate-700 mb-1">Nama Usaha / PT / RT-RW Net</label>
+                  <input type="text" id="setCompanyName" class="w-full p-2.5 rounded-xl border border-slate-200 text-xs font-semibold focus:ring-2 focus:ring-indigo-500" required>
+                </div>
+
+                <div>
+                  <label class="block text-xs font-bold text-slate-700 mb-1">Nomor WhatsApp Resmi Admin</label>
+                  <input type="text" id="setCompanyPhone" class="w-full p-2.5 rounded-xl border border-slate-200 text-xs focus:ring-2 focus:ring-indigo-500" required>
+                </div>
+              </div>
+
+              <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1">Alamat Kantor / Sekretariat Resmi</label>
+                <textarea id="setCompanyAddress" rows="2" class="w-full p-2.5 rounded-xl border border-slate-200 text-xs focus:ring-2 focus:ring-indigo-500" required></textarea>
+              </div>
+
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label class="block text-xs font-bold text-slate-700 mb-1">Rekening Pembayaran Default (Tercetak di Pesan WA & Tagihan)</label>
+                  <input type="text" id="setBankAccounts" class="w-full p-2.5 rounded-xl border border-slate-200 text-xs font-mono focus:ring-2 focus:ring-indigo-500" required>
+                  <p class="text-[10px] text-slate-400 mt-1">Sertakan BCA & SeaBank untuk kemudahan transfer pelanggan.</p>
+                </div>
+
+                <div>
+                  <label class="block text-xs font-bold text-slate-700 mb-1">Default Tanggal Jatuh Tempo Bulanan</label>
+                  <input type="number" min="1" max="31" id="setDefaultDueDate" class="w-full p-2.5 rounded-xl border border-slate-200 text-xs focus:ring-2 focus:ring-indigo-500" required>
+                  <p class="text-[10px] text-slate-400 mt-1">Digunakan sebagai default jika pelanggan tidak ditentukan.</p>
+                </div>
+              </div>
+
+              <!-- Action Buttons -->
+              <div class="pt-4 border-t border-slate-100 flex items-center justify-between">
+                <button type="button" onclick="switchView('dashboard')" class="py-2 px-4 rounded-xl border border-slate-300 text-slate-700 hover:bg-slate-100 text-xs font-bold flex items-center gap-1.5 transition-all">
+                  <i class="fa-solid fa-arrow-left"></i> Kembali
+                </button>
+                <button type="submit" class="py-2.5 px-6 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold shadow-md shadow-indigo-200 flex items-center gap-1.5">
+                  <i class="fa-solid fa-floppy-disk"></i> Simpan Pengaturan Usaha
+                </button>
+              </div>
+            </form>
+          </div>
+        </section>
+
+      </main>
+    </div>
+  </div>
+
+
+  <!-- ================= MODAL 1: FORM INPUT / EDIT PELANGGAN ================= -->
+  <div id="customerModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-3">
+    <div class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[92vh] flex flex-col overflow-hidden animate-in fade-in zoom-in duration-200">
+      
+      <!-- Modal Header dengan Tombol Kembali -->
+      <div class="px-5 py-4 border-b border-slate-200 bg-slate-50 flex items-center justify-between flex-shrink-0">
+        <div class="flex items-center space-x-3">
+          <button type="button" onclick="closeCustomerModal()" class="w-8 h-8 rounded-lg bg-white border border-slate-300 text-slate-600 hover:text-slate-900 hover:bg-slate-100 flex items-center justify-center transition-all shadow-sm" title="Kembali">
+            <i class="fa-solid fa-arrow-left text-xs"></i>
+          </button>
+          <div>
+            <h3 id="custModalTitle" class="font-bold text-slate-800 text-sm md:text-base">Formulir Data Pelanggan</h3>
+            <p class="text-[11px] text-slate-500">Lengkapi informasi profil dan paket langganan</p>
+          </div>
+        </div>
+        <button type="button" onclick="closeCustomerModal()" class="text-slate-400 hover:text-slate-700 p-1">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+
+      <!-- Modal Body Form -->
+      <form id="customerForm" onsubmit="saveCustomerData(event)" class="p-5 space-y-4 overflow-y-auto custom-scrollbar">
+        <input type="hidden" id="custFormMode" value="create">
+        
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div>
+            <label class="block text-[11px] font-bold text-slate-700 mb-1">ID Pelanggan</label>
+            <input type="text" id="custFormId" class="w-full p-2.5 rounded-xl border border-slate-200 bg-slate-100 text-xs font-mono text-slate-600" readonly>
+          </div>
+          <div class="sm:col-span-2">
+            <label class="block text-[11px] font-bold text-slate-700 mb-1">Nama Lengkap *</label>
+            <input type="text" id="custFormName" placeholder="Contoh: Budi Santoso" class="w-full p-2.5 rounded-xl border border-slate-200 text-xs font-semibold focus:ring-2 focus:ring-indigo-500" required>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-[11px] font-bold text-slate-700 mb-1">Nomor WhatsApp *</label>
+            <input type="tel" id="custFormPhone" placeholder="081234567890" class="w-full p-2.5 rounded-xl border border-slate-200 text-xs font-mono focus:ring-2 focus:ring-indigo-500" required>
+          </div>
+          <div>
+            <label class="block text-[11px] font-bold text-slate-700 mb-1">Wilayah / Coverage Area</label>
+            <input type="text" id="custFormArea" placeholder="Contoh: RT 01 / Banyumas" class="w-full p-2.5 rounded-xl border border-slate-200 text-xs focus:ring-2 focus:ring-indigo-500">
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-[11px] font-bold text-slate-700 mb-1">Alamat Pemasangan Rumah *</label>
+          <textarea id="custFormAddress" rows="2" placeholder="Jl. AMD RT 010 No..." class="w-full p-2.5 rounded-xl border border-slate-200 text-xs focus:ring-2 focus:ring-indigo-500" required></textarea>
+        </div>
+
+        <!-- Paket & Biaya -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-[11px] font-bold text-slate-700 mb-1">Pilihan Paket Internet *</label>
+            <select id="custFormPackage" onchange="autoFillPackagePrice()" class="w-full p-2.5 rounded-xl border border-slate-200 text-xs font-semibold focus:ring-2 focus:ring-indigo-500">
+              <option value="10 Mbps">Paket Home 10 Mbps</option>
+              <option value="20 Mbps" selected>Paket Fast 20 Mbps</option>
+              <option value="30 Mbps">Paket Super 30 Mbps</option>
+              <option value="50 Mbps">Paket Ultra 50 Mbps</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-[11px] font-bold text-slate-700 mb-1">Harga Tagihan Bulanan (Rp) *</label>
+            <input type="number" id="custFormPrice" class="w-full p-2.5 rounded-xl border border-slate-200 text-xs font-bold text-indigo-700 focus:ring-2 focus:ring-indigo-500" required>
+          </div>
+        </div>
+
+        <!-- Tanggal Pemasangan & Jatuh Tempo Otomatis -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3 bg-indigo-50/50 rounded-xl border border-indigo-100">
+          <div>
+            <label class="block text-[11px] font-bold text-indigo-900 mb-1">Tanggal Pemasangan *</label>
+            <input type="date" id="custFormInstallDate" onchange="autoSyncDueDateFromInstallDate()" class="w-full p-2 rounded-lg border border-indigo-200 text-xs bg-white focus:ring-2 focus:ring-indigo-500" required>
+            <p class="text-[10px] text-indigo-500 mt-1">Tanggal ini otomatis disinkronkan ke jatuh tempo.</p>
+          </div>
+          <div>
+            <label class="block text-[11px] font-bold text-indigo-900 mb-1">Jatuh Tempo Bulanan (Tgl 1 - 31) *</label>
+            <input type="number" min="1" max="31" id="custFormDueDate" class="w-full p-2 rounded-lg border border-indigo-200 text-xs bg-white font-bold text-indigo-700 focus:ring-2 focus:ring-indigo-500" required>
+            <p class="text-[10px] text-indigo-500 mt-1">Otomatis mengikuti hari pemasangan di atas.</p>
+          </div>
+        </div>
+
+        <!-- Status & Isolir -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-[11px] font-bold text-slate-700 mb-1">Status Pelanggan</label>
+            <select id="custFormStatus" class="w-full p-2.5 rounded-xl border border-slate-200 text-xs focus:ring-2 focus:ring-indigo-500">
+              <option value="Aktif" selected>Aktif (Berlangganan)</option>
+              <option value="Nonaktif">Nonaktif (Berhenti / Putus)</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-[11px] font-bold text-slate-700 mb-1">Status Tagihan Bulan Ini *</label>
+            <select id="custFormBillStatus" class="w-full p-2.5 rounded-xl border border-slate-200 text-xs font-semibold focus:ring-2 focus:ring-indigo-500">
+              <option value="Lunas">Lunas</option>
+              <option value="Belum Bayar" selected>Belum Bayar</option>
+              <option value="Menunggu Verifikasi">Menunggu Verifikasi</option>
+              <option value="Menunggak">Menunggak</option>
+              <option value="Isolir">Isolir (Blokir Akses)</option>
+            </select>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-[11px] font-bold text-slate-700 mb-1">Catatan Khusus (No. Port OLT / Seri ONT)</label>
+          <input type="text" id="custFormNotes" placeholder="Port OLT 1:PON-2 / ONT ZTE-F609" class="w-full p-2.5 rounded-xl border border-slate-200 text-xs focus:ring-2 focus:ring-indigo-500">
+        </div>
+
+        <!-- Footer Tombol Modal -->
+        <div class="pt-3 border-t border-slate-200 flex items-center justify-between flex-shrink-0">
+          <button type="button" onclick="closeCustomerModal()" class="py-2 px-4 rounded-xl border border-slate-300 text-slate-600 hover:bg-slate-100 text-xs font-bold flex items-center gap-1.5 transition-all">
+            <i class="fa-solid fa-arrow-left"></i> Kembali
+          </button>
+          <button type="submit" class="py-2.5 px-6 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold shadow-md shadow-indigo-200 flex items-center gap-1.5">
+            <i class="fa-solid fa-floppy-disk"></i> Simpan Data Pelanggan
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+
+  <!-- ================= MODAL 2: DETAIL PELANGGAN ================= -->
+  <div id="customerDetailModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-3">
+    <div class="bg-white rounded-2xl shadow-2xl max-w-lg w-full overflow-hidden animate-in fade-in zoom-in duration-200">
+      <div class="px-5 py-4 border-b border-slate-200 bg-slate-50 flex items-center justify-between">
+        <div class="flex items-center space-x-3">
+          <button type="button" onclick="closeCustomerDetailModal()" class="w-8 h-8 rounded-lg bg-white border border-slate-300 text-slate-600 hover:bg-slate-100 flex items-center justify-center transition-all shadow-sm">
+            <i class="fa-solid fa-arrow-left text-xs"></i>
+          </button>
+          <h3 class="font-bold text-slate-800 text-sm md:text-base">Informasi Lengkap Pelanggan</h3>
+        </div>
+        <button onclick="closeCustomerDetailModal()" class="text-slate-400 hover:text-slate-700 p-1">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+
+      <div id="customerDetailBody" class="p-5 space-y-3 text-xs">
+        <!-- Rendered dynamically -->
+      </div>
+
+      <div class="p-4 border-t border-slate-200 bg-slate-50 flex items-center justify-between">
+        <button type="button" onclick="closeCustomerDetailModal()" class="py-2 px-4 rounded-xl border border-slate-300 text-slate-600 hover:bg-slate-100 text-xs font-bold flex items-center gap-1.5">
+          <i class="fa-solid fa-arrow-left"></i> Kembali
+        </button>
+        <div class="flex items-center gap-2" id="custDetailActionArea">
+          <!-- Action buttons rendered dynamically -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ================= MODAL 3: PENCATATAN PEMBAYARAN (1B, 6B, 12B) ================= -->
+  <div id="paymentModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-3">
+    <div class="bg-white rounded-2xl shadow-2xl max-w-lg w-full max-h-[92vh] flex flex-col overflow-hidden animate-in fade-in zoom-in duration-200">
+      <div class="px-5 py-4 border-b border-slate-200 bg-slate-50 flex items-center justify-between flex-shrink-0">
+        <div class="flex items-center space-x-3">
+          <button type="button" onclick="closePaymentModal()" class="w-8 h-8 rounded-lg bg-white border border-slate-300 text-slate-600 hover:bg-slate-100 flex items-center justify-center transition-all shadow-sm">
+            <i class="fa-solid fa-arrow-left text-xs"></i>
+          </button>
+          <div>
+            <h3 class="font-bold text-slate-800 text-sm md:text-base">Catat Pembayaran Iuran</h3>
+            <p class="text-[11px] text-slate-500">Konfirmasi setoran tunai atau transfer pelanggan</p>
+          </div>
+        </div>
+        <button onclick="closePaymentModal()" class="text-slate-400 hover:text-slate-700 p-1">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+
+      <form id="paymentForm" onsubmit="submitPaymentData(event)" class="p-5 space-y-4 overflow-y-auto custom-scrollbar">
+        <div>
+          <label class="block text-[11px] font-bold text-slate-700 mb-1">Pilih Pelanggan *</label>
+          <select id="payClientId" onchange="onPaymentCustomerSelected()" class="w-full p-2.5 rounded-xl border border-slate-200 text-xs font-semibold focus:ring-2 focus:ring-indigo-500" required>
+            <option value="">-- Pilih Pelanggan --</option>
+          </select>
+        </div>
+
+        <!-- Tombol Aksi Cepat Durasi (1 Bulan, 6 Bulan, 12 Bulan) -->
+        <div>
+          <label class="block text-[11px] font-bold text-slate-700 mb-1.5">Pilihan Durasi Berlangganan *</label>
+          <div class="grid grid-cols-3 gap-2">
+            <button type="button" onclick="setPaymentDuration(1)" id="btnDur1" class="py-2.5 px-2 rounded-xl border-2 border-indigo-600 bg-indigo-50 text-indigo-700 font-bold text-xs flex flex-col items-center justify-center transition-all">
+              <span>1 Bulan</span>
+              <span class="text-[10px] font-normal">Reguler</span>
+            </button>
+            <button type="button" onclick="setPaymentDuration(6)" id="btnDur6" class="py-2.5 px-2 rounded-xl border border-slate-200 bg-white text-slate-700 font-bold text-xs flex flex-col items-center justify-center hover:bg-slate-50 transition-all">
+              <span>6 Bulan</span>
+              <span class="text-[10px] text-indigo-600 font-semibold">Semester</span>
+            </button>
+            <button type="button" onclick="setPaymentDuration(12)" id="btnDur12" class="py-2.5 px-2 rounded-xl border border-slate-200 bg-white text-slate-700 font-bold text-xs flex flex-col items-center justify-center hover:bg-slate-50 transition-all">
+              <span>12 Bulan</span>
+              <span class="text-[10px] text-amber-600 font-semibold">1 Tahun</span>
+            </button>
+          </div>
+          <input type="hidden" id="payDurationVal" value="1">
+        </div>
+
+        <div class="p-3 bg-slate-50 rounded-xl border border-slate-200">
+          <div class="flex justify-between items-center text-xs">
+            <span class="text-slate-500">Cakupan Periode:</span>
+            <span id="payPeriodPreview" class="font-bold text-indigo-700">September 2026</span>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-[11px] font-bold text-slate-700 mb-1">Total Nominal Bayar (Rp) *</label>
+            <input type="number" id="payAmount" class="w-full p-2.5 rounded-xl border border-slate-200 text-xs font-black text-emerald-600 focus:ring-2 focus:ring-indigo-500" required>
+          </div>
+          <div>
+            <label class="block text-[11px] font-bold text-slate-700 mb-1">Tanggal Bayar *</label>
+            <input type="date" id="payDate" class="w-full p-2.5 rounded-xl border border-slate-200 text-xs focus:ring-2 focus:ring-indigo-500" required>
+          </div>
+        </div>
+
+        <!-- Metode Pembayaran Termasuk SeaBank -->
+        <div>
+          <label class="block text-[11px] font-bold text-slate-700 mb-1">Metode Pembayaran *</label>
+          <select id="payMethod" class="w-full p-2.5 rounded-xl border border-slate-200 text-xs font-semibold focus:ring-2 focus:ring-indigo-500">
+            <option value="Tunai">Tunai (Cash / Petugas)</option>
+            <option value="Transfer BCA">Transfer Bank BCA</option>
+            <option value="Transfer SeaBank" selected>Transfer SeaBank</option>
+            <option value="QRIS">QRIS Jalur Data</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-[11px] font-bold text-slate-700 mb-1">Catatan Transaksi</label>
+          <input type="text" id="payNotes" placeholder="Setoran lunas via m-banking" class="w-full p-2.5 rounded-xl border border-slate-200 text-xs focus:ring-2 focus:ring-indigo-500">
+        </div>
+
+        <div class="pt-3 border-t border-slate-200 flex items-center justify-between flex-shrink-0">
+          <button type="button" onclick="closePaymentModal()" class="py-2 px-4 rounded-xl border border-slate-300 text-slate-600 hover:bg-slate-100 text-xs font-bold flex items-center gap-1.5 transition-all">
+            <i class="fa-solid fa-arrow-left"></i> Kembali
+          </button>
+          <button type="submit" class="py-2.5 px-6 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-md shadow-emerald-200 flex items-center gap-1.5">
+            <i class="fa-solid fa-check-double"></i> Bayar & Simpan Tagihan
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+
+  <!-- ================= MODAL 4: NOTIFIKASI PEMBAYARAN SUKSES (AUTO-CLOSE) ================= -->
+  <div id="paymentSuccessModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-3">
+    <div class="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-6 text-center animate-in fade-in zoom-in duration-200">
+      <div class="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto text-2xl shadow-inner mb-4">
+        <i class="fa-solid fa-circle-check"></i>
+      </div>
+      <h3 class="text-base font-bold text-slate-800">Pembayaran Berhasil!</h3>
+      <p class="text-xs text-slate-500 mt-1 mb-4" id="paySuccessMsg">Iuran berhasil dicatat dan status pelanggan otomatis diperbarui.</p>
+      
+      <div class="flex flex-col gap-2">
+        <button id="btnOpenLatestReceipt" onclick="openLatestReceipt()" class="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-2">
+          <i class="fa-solid fa-receipt"></i> Lihat / Cetak Kuitansi
+        </button>
+        <button onclick="closePaymentSuccessModal()" class="w-full py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold">
+          Tutup Sekarang (<span id="successCountdown">4</span>s)
+        </button>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ================= MODAL 5: KUITANSI PEMBAYARAN & NOTA ================= -->
+  <div id="receiptModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-3">
+    <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full max-h-[94vh] flex flex-col overflow-hidden animate-in fade-in zoom-in duration-200">
+      
+      <!-- Header Bar Kuitansi (Sticky) dengan Tombol Kembali yang Kontras -->
+      <div class="px-4 py-3 bg-slate-900 text-white flex items-center justify-between flex-shrink-0">
+        <button onclick="closeReceiptModal()" class="py-1.5 px-3 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-bold flex items-center gap-1.5 text-slate-200 border border-slate-700 transition-all">
+          <i class="fa-solid fa-arrow-left"></i> Kembali
+        </button>
+        <span class="text-xs font-bold uppercase tracking-wider text-indigo-300">Nota Kuitansi Resmi</span>
+        <button onclick="closeReceiptModal()" class="text-slate-400 hover:text-white p-1">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+
+      <!-- Isi Kuitansi Cetak -->
+      <div class="p-6 overflow-y-auto custom-scrollbar bg-slate-50/50" id="receiptScrollableArea">
+        <div id="printableReceipt" class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm text-xs space-y-4">
+          
+          <!-- Kop Kuitansi -->
+          <div class="text-center border-b border-dashed border-slate-300 pb-3">
+            <h2 class="text-base font-black text-slate-900 uppercase" id="rcCompany">PT. JALUR DATA INDONESIA</h2>
+            <p class="text-[10px] text-slate-500" id="rcAddress">Jl. AMD RT 010 RW 03 No 35 Banyumas Kec. Banyumas Kab. Pringsewu (depan PERTASHOP)</p>
+            <p class="text-[10px] text-slate-500">WhatsApp: 0812-3456-7890</p>
+            <div class="inline-block mt-2 px-2.5 py-0.5 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded font-bold text-[10px] uppercase">
+              LUNAS / TERVERIFIKASI
+            </div>
+          </div>
+
+          <!-- Rincian -->
+          <div class="space-y-1.5 text-[11px] border-b border-dashed border-slate-300 pb-3">
+            <div class="flex justify-between">
+              <span class="text-slate-500">No. Bukti:</span>
+              <span id="rcReceiptNo" class="font-mono font-bold text-slate-800">KW-0001</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-slate-500">Tanggal Bayar:</span>
+              <span id="rcDate" class="font-semibold text-slate-800">20/09/2026</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-slate-500">Nama Pelanggan:</span>
+              <span id="rcClientName" class="font-bold text-slate-800">Budi Santoso</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-slate-500">ID Pelanggan:</span>
+              <span id="rcClientId" class="font-mono text-slate-700">JDI-001</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-slate-500">Paket Internet:</span>
+              <span id="rcPackage" class="font-semibold text-slate-800">20 Mbps</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-slate-500">Periode Bayar:</span>
+              <span id="rcPeriod" class="font-bold text-indigo-700">September 2026</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-slate-500">Metode Bayar:</span>
+              <span id="rcMethod" class="font-semibold text-slate-800">Transfer SeaBank</span>
+            </div>
+          </div>
+
+          <!-- Total Bayar -->
+          <div class="flex justify-between items-center py-2 border-b-2 border-slate-800">
+            <span class="font-bold text-slate-700 uppercase">Jumlah Bayar:</span>
+            <span id="rcAmount" class="text-base font-black text-emerald-700">Rp 150.000</span>
+          </div>
+
+          <!-- Catatan Kuitansi -->
+          <div class="text-[10px] text-slate-500 text-center space-y-1 pt-1">
+            <p>Terima kasih atas pembayaran iuran tepat waktu.</p>
+            <p>Layanan internet Anda tetap aktif dan lancar.</p>
+            <p class="font-mono text-[9px] text-slate-400 mt-2">ID Otentikasi: SEC-<span id="rcAuthCode">992102</span></p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Footer Tombol Sticky -->
+      <div class="p-3 bg-white border-t border-slate-200 flex items-center justify-between gap-2 flex-shrink-0">
+        <button onclick="closeReceiptModal()" class="py-2 px-4 rounded-xl border border-slate-300 text-slate-700 hover:bg-slate-100 text-xs font-bold flex items-center gap-1.5 transition-all">
+          <i class="fa-solid fa-arrow-left"></i> Kembali
+        </button>
+        <div class="flex items-center gap-2">
+          <button onclick="sendReceiptWhatsApp()" class="py-2 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold flex items-center gap-1.5 shadow-sm shadow-emerald-200">
+            <i class="fa-brands fa-whatsapp"></i> Kirim WA
+          </button>
+          <button onclick="printCurrentReceipt()" class="py-2 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold flex items-center gap-1.5 shadow-sm shadow-indigo-200">
+            <i class="fa-solid fa-print"></i> Cetak
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ================= MODAL 6: KAS MASUK & KAS KELUAR ================= -->
+  <div id="kasModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-3">
+    <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden animate-in fade-in zoom-in duration-200">
+      <div class="px-5 py-4 border-b border-slate-200 bg-slate-50 flex items-center justify-between">
+        <div class="flex items-center space-x-3">
+          <button type="button" onclick="closeKasModal()" class="w-8 h-8 rounded-lg bg-white border border-slate-300 text-slate-600 hover:bg-slate-100 flex items-center justify-center transition-all shadow-sm">
+            <i class="fa-solid fa-arrow-left text-xs"></i>
+          </button>
+          <h3 id="kasModalTitle" class="font-bold text-slate-800 text-sm md:text-base">Catat Transaksi Kas</h3>
+        </div>
+        <button onclick="closeKasModal()" class="text-slate-400 hover:text-slate-700 p-1">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+
+      <form id="kasForm" onsubmit="saveKasTransaction(event)" class="p-5 space-y-3.5 text-xs">
+        <input type="hidden" id="kasType" value="masuk">
+        
+        <div>
+          <label class="block text-[11px] font-bold text-slate-700 mb-1">Tanggal Transaksi *</label>
+          <input type="date" id="kasDate" class="w-full p-2.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-indigo-500" required>
+        </div>
+
+        <div>
+          <label class="block text-[11px] font-bold text-slate-700 mb-1">Kategori *</label>
+          <select id="kasCategory" class="w-full p-2.5 rounded-xl border border-slate-200 font-semibold focus:ring-2 focus:ring-indigo-500">
+            <!-- Populated via script -->
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-[11px] font-bold text-slate-700 mb-1" id="kasLabelRef">Sumber / Pihak Terkait *</label>
+          <input type="text" id="kasRef" placeholder="Contoh: Pembayaran Pelanggan / PLN" class="w-full p-2.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-indigo-500" required>
+        </div>
+
+        <div>
+          <label class="block text-[11px] font-bold text-slate-700 mb-1">Nominal (Rp) *</label>
+          <input type="number" id="kasAmount" placeholder="150000" class="w-full p-2.5 rounded-xl border border-slate-200 font-bold text-slate-800 focus:ring-2 focus:ring-indigo-500" required>
+        </div>
+
+        <div>
+          <label class="block text-[11px] font-bold text-slate-700 mb-1">Keterangan / Deskripsi</label>
+          <input type="text" id="kasDesc" placeholder="Keterangan tambahan transaksi" class="w-full p-2.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-indigo-500">
+        </div>
+
+        <div class="pt-3 border-t border-slate-200 flex items-center justify-between">
+          <button type="button" onclick="closeKasModal()" class="py-2 px-4 rounded-xl border border-slate-300 text-slate-600 hover:bg-slate-100 text-xs font-bold flex items-center gap-1.5 transition-all">
+            <i class="fa-solid fa-arrow-left"></i> Kembali
+          </button>
+          <button type="submit" id="kasSubmitBtn" class="py-2.5 px-6 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold shadow-md shadow-indigo-200 flex items-center gap-1.5">
+            <i class="fa-solid fa-floppy-disk"></i> Simpan Kas
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+
+  <!-- ================= MODAL 7: DIALOG KONFIRMASI HAPUS ================= -->
+  <div id="confirmModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-3">
+    <div class="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-5 text-center animate-in fade-in zoom-in duration-200">
+      <div class="w-12 h-12 bg-rose-100 text-rose-600 rounded-full flex items-center justify-center mx-auto text-xl mb-3">
+        <i class="fa-solid fa-triangle-exclamation"></i>
+      </div>
+      <h3 class="font-bold text-slate-800 text-sm" id="confirmTitle">Konfirmasi Hapus</h3>
+      <p class="text-xs text-slate-500 mt-1 mb-5" id="confirmMessage">Apakah Anda yakin ingin menghapus data ini secara permanen?</p>
+      <div class="flex items-center justify-center gap-2">
+        <button onclick="closeConfirmModal(false)" class="py-2 px-4 rounded-xl border border-slate-300 text-slate-700 hover:bg-slate-100 text-xs font-semibold">
+          Batal
+        </button>
+        <button onclick="closeConfirmModal(true)" class="py-2 px-5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold shadow-sm shadow-rose-200">
+          Ya, Hapus Data
+        </button>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ================= JAVASCRIPT SISTEM ================= -->
+  <script>
+    /* -------------------------------------------------------------
+       DATABASE & STATE AWAL (LOCALSTORAGE READY)
+       ------------------------------------------------------------- */
+    const DEFAULT_COMPANY = {
+      name: "PT. JALUR DATA INDONESIA",
+      address: "Jl. AMD RT 010 RW 03 No 35 Banyumas Kec. Banyumas Kab. Pringsewu (depan PERTASHOP)",
+      phone: "081234567890",
+      bankAccounts: "Bank BCA: 123-456-7890 | SeaBank: 9012-3456-7890 a.n PT Jalur Data Indonesia / QRIS",
+      defaultDueDate: 20
+    };
+
+    const DEFAULT_CUSTOMERS = [
+      {
+        id: "JDI-001",
+        name: "Budi Santoso",
+        phone: "081234567891",
+        area: "RT 010 Banyumas",
+        address: "Jl. AMD No. 12 RT 010",
+        package: "20 Mbps",
+        price: 150000,
+        installDate: "2026-09-10",
+        dueDate: 10,
+        status: "Aktif",
+        billStatus: "Lunas",
+        notes: "Port OLT 1:PON-1 / ONT ZTE-F609"
+      },
+      {
+        id: "JDI-002",
+        name: "Siti Rahmawati",
+        phone: "081234567892",
+        area: "RT 010 Banyumas",
+        address: "Jl. AMD No. 25 Depan Pos Ronda",
+        package: "10 Mbps",
+        price: 100000,
+        installDate: "2026-09-15",
+        dueDate: 15,
+        status: "Aktif",
+        billStatus: "Belum Bayar",
+        notes: "ONT Huawei HG8245H5"
+      },
+      {
+        id: "JDI-003",
+        name: "Ahmad Hidayat",
+        phone: "081234567893",
+        area: "RT 003 Banyumas",
+        address: "Komplek Perumahan Indah Blok B4",
+        package: "30 Mbps",
+        price: 200000,
+        installDate: "2026-09-05",
+        dueDate: 5,
+        status: "Aktif",
+        billStatus: "Menunggak",
+        notes: "Jatuh tempo tgl 5, belum bayar"
+      },
+      {
+        id: "JDI-004",
+        name: "Dewi Lestari",
+        phone: "081234567894",
+        area: "RT 010 Banyumas",
+        address: "Jl. Melati No. 8 RT 010",
+        package: "20 Mbps",
+        price: 150000,
+        installDate: "2026-09-02",
+        dueDate: 2,
+        status: "Aktif",
+        billStatus: "Isolir",
+        notes: "Menunggak 2 bulan, akses diisolir"
+      },
+      {
+        id: "JDI-005",
+        name: "Rian Prasetyo",
+        phone: "081234567895",
+        area: "RT 002 Banyumas",
+        address: "Jl. AMD Gg. Kamboja No. 3",
+        package: "50 Mbps",
+        price: 300000,
+        installDate: "2026-09-20",
+        dueDate: 20,
+        status: "Aktif",
+        billStatus: "Lunas",
+        notes: "Pelanggan prioritas usaha warkop"
+      }
+    ];
+
+    const DEFAULT_PAYMENTS = [
+      {
+        id: "KW-260901",
+        clientId: "JDI-001",
+        clientName: "Budi Santoso",
+        package: "20 Mbps",
+        period: "September 2026",
+        duration: 1,
+        amount: 150000,
+        date: "2026-09-10",
+        method: "Transfer SeaBank",
+        status: "Lunas",
+        notes: "Pembayaran tepat waktu"
+      },
+      {
+        id: "KW-260902",
+        clientId: "JDI-005",
+        clientName: "Rian Prasetyo",
+        package: "50 Mbps",
+        period: "September 2026 s/d Februari 2027 (6 Bulan)",
+        duration: 6,
+        amount: 1800000,
+        date: "2026-09-20",
+        method: "Transfer BCA",
+        status: "Lunas",
+        notes: "Paket semesteran 6 bulan lunas"
+      }
+    ];
+
+    const DEFAULT_KAS = [
+      { id: 1, type: "masuk", date: "2026-09-10", category: "Iuran Pelanggan", ref: "Budi Santoso (JDI-001)", amount: 150000, desc: "Pembayaran September" },
+      { id: 2, type: "masuk", date: "2026-09-20", category: "Iuran Pelanggan", ref: "Rian Prasetyo (JDI-005)", amount: 1800000, desc: "Iuran 6 Bulan" },
+      { id: 3, type: "keluar", date: "2026-09-01", category: "Bandwidth ISP Induk", ref: "PT Solusi Lintas Data", amount: 850000, desc: "Tagihan Dedicated 100M" },
+      { id: 4, type: "keluar", date: "2026-09-05", category: "Listrik & PLN", ref: "PLN Kantor", amount: 180000, desc: "Token listrik OLT & NOC" },
+      { id: 5, type: "keluar", date: "2026-09-15", category: "Maintenance Jaringan", ref: "Toko Fiber Optik", amount: 120000, desc: "Beli Fast Connector & Pigtail" }
+    ];
+
+    const DEFAULT_WA_TEMPLATES = {
+      billing: `Halo Bpk/Ibu *{{nama_pelanggan}}*,\n\nKami dari *PT. JALUR DATA INDONESIA* menginformasikan tagihan internet WiFi Anda:\n- ID Pelanggan: *{{id_pelanggan}}*\n- Paket: *{{paket}}*\n- Periode: *{{periode}}*\n- Jatuh Tempo: *{{jatuh_tempo}}*\n- Total Tagihan: *{{nominal}}*\n\nPembayaran dapat ditransfer melalui:\n{{rekening_pembayaran}}\n\nMohon konfirmasi jika sudah melakukan pembayaran. Terima kasih atas kerja samanya.`,
+      thanks: `Terima kasih, Bpk/Ibu *{{nama_pelanggan}}*.\n\nPembayaran internet WiFi Anda untuk periode *{{periode}}* sebesar *{{nominal}}* telah kami terima dan terverifikasi *LUNAS* (No. Bukti: {{no_kwitansi}}).\n\nLayanan internet Anda tetap aktif normal. Selamat menikmati koneksi dari *PT. JALUR DATA INDONESIA*!`
+    };
+
+    // State Aplikasi
+    let appState = {
+      company: JSON.parse(localStorage.getItem('jdi_company')) || DEFAULT_COMPANY,
+      customers: JSON.parse(localStorage.getItem('jdi_customers')) || DEFAULT_CUSTOMERS,
+      payments: JSON.parse(localStorage.getItem('jdi_payments')) || DEFAULT_PAYMENTS,
+      kas: JSON.parse(localStorage.getItem('jdi_kas')) || DEFAULT_KAS,
+      waTemplates: JSON.parse(localStorage.getItem('jdi_wa_templates')) || DEFAULT_WA_TEMPLATES,
+      waLogs: JSON.parse(localStorage.getItem('jdi_wa_logs')) || []
+    };
+
+    // Migrasi data lama jika masih nama lama
+    if (!appState.company.name.includes("PT. JALUR DATA INDONESIA")) {
+      appState.company = { ...DEFAULT_COMPANY };
+      localStorage.setItem('jdi_company', JSON.stringify(appState.company));
+    }
+
+    let activeReceiptData = null;
+    let confirmCallback = null;
+    let autoCloseTimer = null;
+    let financialChartInstance = null;
+
+    /* -------------------------------------------------------------
+       INISIALISASI & GLOBAL RUNTIME
+       ------------------------------------------------------------- */
+    document.addEventListener("DOMContentLoaded", () => {
+      initBranding();
+      initLiveClock();
+      renderDashboard();
+      renderCustomerTable();
+      renderMatrixTable();
+      renderPaymentHistory();
+      renderKasTables();
+      renderMonthlyReport();
+      loadWhatsAppView();
+      loadSettingsView();
+
+      // Tutup modal jika tombol Esc ditekan
+      window.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+          closeCustomerModal();
+          closeCustomerDetailModal();
+          closePaymentModal();
+          closePaymentSuccessModal();
+          closeReceiptModal();
+          closeKasModal();
+          closeConfirmModal(false);
+        }
+      });
+    });
+
+    function saveStateToStorage() {
+      localStorage.setItem('jdi_company', JSON.stringify(appState.company));
+      localStorage.setItem('jdi_customers', JSON.stringify(appState.customers));
+      localStorage.setItem('jdi_payments', JSON.stringify(appState.payments));
+      localStorage.setItem('jdi_kas', JSON.stringify(appState.kas));
+      localStorage.setItem('jdi_wa_templates', JSON.stringify(appState.waTemplates));
+      localStorage.setItem('jdi_wa_logs', JSON.stringify(appState.waLogs));
+    }
+
+    function initBranding() {
+      document.getElementById('sidebarBrandName').innerText = appState.company.name;
+      document.getElementById('reportCompanyTitle').innerText = appState.company.name;
+      document.getElementById('reportCompanyAddress').innerText = appState.company.address;
+      document.getElementById('rcCompany').innerText = appState.company.name;
+      document.getElementById('rcAddress').innerText = appState.company.address;
+    }
+
+    function initLiveClock() {
+      const clockEl = document.getElementById('liveClock');
+      function update() {
+        const now = new Date();
+        clockEl.innerText = now.toLocaleTimeString('id-ID') + " WIB";
+      }
+      setInterval(update, 1000);
+      update();
+    }
+
+    function formatRupiah(num) {
+      return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(num);
+    }
+
+    /* -------------------------------------------------------------
+       NAVIGASI VIEW & SIDEBAR
+       ------------------------------------------------------------- */
+    window.switchView = function(viewId) {
+      const views = ['dashboard', 'pelanggan', 'matriks', 'pembayaran', 'kas-masuk', 'kas-keluar', 'laporan', 'whatsapp', 'pengaturan'];
+      views.forEach(v => {
+        const el = document.getElementById(`view-${v}`);
+        const navEl = document.getElementById(`nav-${v}`);
+        if (el) el.classList.add('hidden');
+        if (navEl) {
+          navEl.classList.remove('bg-indigo-600', 'text-white', 'font-semibold');
+          navEl.classList.add('text-slate-300', 'font-medium');
+        }
+      });
+
+      const activeViewEl = document.getElementById(`view-${viewId}`);
+      const activeNavEl = document.getElementById(`nav-${viewId}`);
+      if (activeViewEl) activeViewEl.classList.remove('hidden');
+      if (activeNavEl) {
+        activeNavEl.classList.remove('text-slate-300', 'font-medium');
+        activeNavEl.classList.add('bg-indigo-600', 'text-white', 'font-semibold');
+      }
+
+      // Update Top Header Titles
+      const titleMap = {
+        'dashboard': ['Dashboard Eksekutif', 'Ringkasan performa dan aktivitas RT/RW Net'],
+        'pelanggan': ['Data Pelanggan', 'Manajemen data pelanggan, paket, dan status tagihan'],
+        'matriks': ['Matriks Tagihan', 'Status pembayaran bulanan tahun 2026'],
+        'pembayaran': ['Pencatatan Pembayaran', 'Daftar transaksi dan penerimaan kuitansi'],
+        'kas-masuk': ['Buku Kas Masuk', 'Pencatatan seluruh penerimaan kas usaha'],
+        'kas-keluar': ['Buku Kas Keluar', 'Pengeluaran operasional dan biaya teknis'],
+        'laporan': ['Laporan & Ekspor PDF', 'Rekapitulasi setoran bulanan pelanggan'],
+        'whatsapp': ['Notifikasi WhatsApp', 'Broadcast tagihan dan konfirmasi kuitansi'],
+        'pengaturan': ['Pengaturan Usaha', 'Profil perusahaan, rekening bank, dan sistem']
+      };
+
+      if (titleMap[viewId]) {
+        document.getElementById('topHeaderTitle').innerText = titleMap[viewId][0];
+        document.getElementById('topHeaderSubtitle').innerText = titleMap[viewId][1];
+      }
+
+      // Auto Render Saat Masuk View
+      if (viewId === 'dashboard') renderDashboard();
+      if (viewId === 'pelanggan') renderCustomerTable();
+      if (viewId === 'matriks') renderMatrixTable();
+      if (viewId === 'pembayaran') renderPaymentHistory();
+      if (viewId === 'kas-masuk' || viewId === 'kas-keluar') renderKasTables();
+      if (viewId === 'laporan') renderMonthlyReport();
+
+      // Tutup sidebar di tampilan mobile jika terbuka
+      const sidebar = document.getElementById('mainSidebar');
+      if (!sidebar.classList.contains('-translate-x-full') && window.innerWidth < 768) {
+        toggleSidebar();
+      }
+    };
+
+    window.toggleSidebar = function() {
+      const sidebar = document.getElementById('mainSidebar');
+      sidebar.classList.toggle('-translate-x-full');
+    };
+
+    window.logoutAdmin = function() {
+      customConfirm("Logout Sistem", "Apakah Anda ingin keluar dari panel admin?", () => {
+        alert("Sesi ditutup. Anda dapat membuka aplikasi kembali kapan saja.");
+      });
+    };
+
+    /* -------------------------------------------------------------
+       VIEW 1: DASHBOARD LOGIC
+       ------------------------------------------------------------- */
+    function renderDashboard() {
+      const activeClients = appState.customers.filter(c => c.status === 'Aktif');
+      const unpaidOrIsolir = appState.customers.filter(c => c.billStatus === 'Belum Bayar' || c.billStatus === 'Menunggak' || c.billStatus === 'Isolir');
+      
+      const totalKasMasuk = appState.kas.filter(k => k.type === 'masuk').reduce((acc, curr) => acc + curr.amount, 0);
+      const totalKasKeluar = appState.kas.filter(k => k.type === 'keluar').reduce((acc, curr) => acc + curr.amount, 0);
+      const targetBills = activeClients.reduce((acc, curr) => acc + curr.price, 0);
+
+      document.getElementById('dashActiveClients').innerText = activeClients.length;
+      document.getElementById('dashUnpaidClients').innerText = unpaidOrIsolir.length;
+      document.getElementById('dashReceivedIncome').innerText = formatRupiah(totalKasMasuk);
+      document.getElementById('dashTargetBill').innerText = `dari Target: ${formatRupiah(targetBills)}`;
+      document.getElementById('dashNetBalance').innerText = formatRupiah(totalKasMasuk - totalKasKeluar);
+      document.getElementById('dashKasKeluarSummary').innerText = `Beban Operasional: ${formatRupiah(totalKasKeluar)}`;
+
+      // Render Prioritas Penagihan (Menunggak / Isolir / Belum Bayar)
+      const dueListEl = document.getElementById('dueClientsList');
+      dueListEl.innerHTML = '';
+      if (unpaidOrIsolir.length === 0) {
+        dueListEl.innerHTML = `<div class="text-center py-6 text-slate-400">Semua pelanggan telah melunasi tagihan! 🎉</div>`;
+      } else {
+        unpaidOrIsolir.forEach(c => {
+          const badgeClass = c.billStatus === 'Isolir' 
+            ? 'bg-purple-100 text-purple-800' 
+            : (c.billStatus === 'Menunggak' ? 'bg-rose-100 text-rose-800' : 'bg-amber-100 text-amber-800');
+          
+          dueListEl.innerHTML += `
+            <div class="p-2.5 rounded-xl border border-slate-100 bg-slate-50 flex items-center justify-between hover:bg-white hover:shadow-xs transition-all">
+              <div>
+                <div class="flex items-center gap-2">
+                  <span class="font-bold text-slate-800">${c.name}</span>
+                  <span class="px-1.5 py-0.5 rounded text-[10px] font-bold ${badgeClass}">${c.billStatus}</span>
+                </div>
+                <p class="text-[11px] text-slate-500">Jatuh Tempo: Tgl ${c.dueDate} • ${formatRupiah(c.price)}</p>
+              </div>
+              <div class="flex items-center gap-1">
+                <button onclick="quickPayFromTable('${c.id}', 1)" title="Bayar 1 Bulan" class="px-2 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded text-[10px] font-bold">1B</button>
+                <button onclick="sendSingleWaReminder('${c.id}')" title="Kirim WA" class="p-1.5 text-emerald-600 hover:bg-emerald-50 rounded"><i class="fa-brands fa-whatsapp text-sm"></i></button>
+              </div>
+            </div>
+          `;
+        });
+      }
+
+      // Render Pembayaran Terkini
+      const recentPaymentsEl = document.getElementById('dashRecentPayments');
+      recentPaymentsEl.innerHTML = '';
+      const recent = [...appState.payments].reverse().slice(0, 5);
+      if (recent.length === 0) {
+        recentPaymentsEl.innerHTML = `<tr><td colspan="7" class="p-4 text-center text-slate-400">Belum ada aktivitas pembayaran tercatat.</td></tr>`;
+      } else {
+        recent.forEach(p => {
+          recentPaymentsEl.innerHTML += `
+            <tr class="hover:bg-slate-50/80 transition-colors">
+              <td class="p-3.5 font-mono font-bold text-slate-700">${p.id}</td>
+              <td class="p-3.5 font-semibold text-slate-800">${p.clientName}</td>
+              <td class="p-3.5 text-slate-600">${p.package} <span class="text-slate-400">(${p.period})</span></td>
+              <td class="p-3.5 font-bold text-emerald-600">${formatRupiah(p.amount)}</td>
+              <td class="p-3.5"><span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-slate-100 text-slate-700">${p.method}</span></td>
+              <td class="p-3.5 text-slate-500">${p.date}</td>
+              <td class="p-3.5 text-center">
+                <button onclick="openReceiptModalById('${p.id}')" class="px-2.5 py-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-lg font-bold text-[11px]"><i class="fa-solid fa-receipt mr-1"></i> Kuitansi</button>
+              </td>
+            </tr>
+          `;
+        });
+      }
+
+      // Inisialisasi Chart.js
+      initFinancialChart();
+    }
+
+    function initFinancialChart() {
+      const ctx = document.getElementById('financialChart');
+      if (!ctx) return;
+      if (financialChartInstance) {
+        financialChartInstance.destroy();
+      }
+
+      financialChartInstance = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: ['Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep'],
+          datasets: [
+            {
+              label: 'Pemasukan Kas (Rp)',
+              data: [1200000, 1450000, 1600000, 1800000, 1950000, 2350000],
+              backgroundColor: '#4f46e5',
+              borderRadius: 6
+            },
+            {
+              label: 'Pengeluaran Kas (Rp)',
+              data: [900000, 950000, 1000000, 1100000, 1050000, 1150000],
+              backgroundColor: '#f43f5e',
+              borderRadius: 6
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { position: 'top', labels: { boxWidth: 12, font: { size: 11 } } }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              ticks: {
+                callback: function(value) {
+                  return 'Rp ' + (value / 1000).toLocaleString('id-ID') + 'k';
+                },
+                font: { size: 10 }
+              },
+              grid: { color: '#f1f5f9' }
+            },
+            x: {
+              grid: { display: false },
+              ticks: { font: { size: 11 } }
+            }
+          }
+        }
+      });
+    }
+
+    /* -------------------------------------------------------------
+       VIEW 2: DATA PELANGGAN (CRUD, SYNC DUE DATE, ISOLIR)
+       ------------------------------------------------------------- */
+    window.renderCustomerTable = function() {
+      const tbody = document.getElementById('customerTableBody');
+      const search = document.getElementById('custSearchInput').value.toLowerCase();
+      const statusFilter = document.getElementById('custStatusFilter').value;
+      const pkgFilter = document.getElementById('custPackageFilter').value;
+
+      tbody.innerHTML = '';
+
+      let filtered = appState.customers.filter(c => {
+        const matchesSearch = c.name.toLowerCase().includes(search) ||
+                              c.id.toLowerCase().includes(search) ||
+                              c.phone.includes(search) ||
+                              c.package.toLowerCase().includes(search);
+        const matchesStatus = statusFilter === 'all' || c.billStatus === statusFilter;
+        const matchesPkg = pkgFilter === 'all' || c.package === pkgFilter;
+        return matchesSearch && matchesStatus && matchesPkg;
+      });
+
+      document.getElementById('custTableCountInfo').innerText = `Menampilkan ${filtered.length} dari ${appState.customers.length} pelanggan`;
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="8" class="p-6 text-center text-slate-400">Tidak ada data pelanggan yang sesuai kriteria pencarian.</td></tr>`;
+        return;
+      }
+
+      filtered.forEach(c => {
+        let badgeClass = "bg-slate-100 text-slate-700";
+        if (c.billStatus === "Lunas") badgeClass = "bg-emerald-100 text-emerald-800";
+        else if (c.billStatus === "Belum Bayar") badgeClass = "bg-amber-100 text-amber-800";
+        else if (c.billStatus === "Menunggak") badgeClass = "bg-rose-100 text-rose-800";
+        else if (c.billStatus === "Isolir") badgeClass = "bg-purple-100 text-purple-800";
+
+        tbody.innerHTML += `
+          <tr class="hover:bg-slate-50/80 transition-colors">
+            <td class="p-3.5">
+              <span class="font-mono font-bold text-indigo-600 block text-[10px]">${c.id}</span>
+              <span class="font-bold text-slate-900">${c.name}</span>
+            </td>
+            <td class="p-3.5">
+              <a href="https://wa.me/${c.phone.replace(/^0/, '62')}" target="_blank" class="text-emerald-600 font-semibold hover:underline flex items-center gap-1">
+                <i class="fa-brands fa-whatsapp"></i> ${c.phone}
+              </a>
+              <p class="text-[11px] text-slate-500 truncate max-w-xs">${c.address}</p>
+            </td>
+            <td class="p-3.5">
+              <span class="font-bold text-slate-800">${c.package}</span>
+              <p class="text-[11px] text-indigo-700 font-bold">${formatRupiah(c.price)}</p>
+            </td>
+            <td class="p-3.5 text-slate-600">${c.installDate || '-'}</td>
+            <td class="p-3.5 font-bold text-slate-700">Tgl ${c.dueDate}</td>
+            <td class="p-3.5">
+              <span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${badgeClass}">${c.billStatus}</span>
+            </td>
+            <td class="p-3.5 text-center">
+              <div class="inline-flex rounded-lg border border-slate-200 overflow-hidden shadow-2xs">
+                <button onclick="quickPayFromTable('${c.id}', 1)" title="Bayar 1 Bulan" class="px-2 py-1 bg-white hover:bg-slate-100 text-slate-700 font-bold text-[10px] border-r border-slate-200">1B</button>
+                <button onclick="quickPayFromTable('${c.id}', 6)" title="Bayar 6 Bulan" class="px-2 py-1 bg-white hover:bg-indigo-50 text-indigo-600 font-bold text-[10px] border-r border-slate-200">6B</button>
+                <button onclick="quickPayFromTable('${c.id}', 12)" title="Bayar 12 Bulan (1 Tahun)" class="px-2 py-1 bg-white hover:bg-emerald-50 text-emerald-600 font-bold text-[10px]">12B</button>
+              </div>
+            </td>
+            <td class="p-3.5 text-center">
+              <div class="flex items-center justify-center space-x-1">
+                <button onclick="viewCustomerDetail('${c.id}')" title="Detail" class="p-1.5 rounded-lg text-slate-500 hover:text-indigo-600 hover:bg-indigo-50"><i class="fa-solid fa-eye"></i></button>
+                <button onclick="editCustomer('${c.id}')" title="Edit" class="p-1.5 rounded-lg text-slate-500 hover:text-amber-600 hover:bg-amber-50"><i class="fa-solid fa-pen-to-square"></i></button>
+                <button onclick="deleteCustomer('${c.id}')" title="Hapus" class="p-1.5 rounded-lg text-slate-500 hover:text-rose-600 hover:bg-rose-50"><i class="fa-solid fa-trash"></i></button>
+              </div>
+            </td>
+          </tr>
+        `;
+      });
+    };
+
+    window.openCustomerModal = function() {
+      document.getElementById('custFormMode').value = 'create';
+      document.getElementById('custModalTitle').innerText = 'Tambah Pelanggan Baru';
+      document.getElementById('customerForm').reset();
+      
+      // Auto ID
+      const nextNum = appState.customers.length + 1;
+      document.getElementById('custFormId').value = "JDI-" + String(nextNum).padStart(3, '0');
+      
+      // Default Install Date hari ini
+      const today = new Date().toISOString().split('T')[0];
+      document.getElementById('custFormInstallDate').value = today;
+      autoSyncDueDateFromInstallDate();
+      autoFillPackagePrice();
+
+      document.getElementById('customerModal').classList.remove('hidden');
+    };
+
+    window.closeCustomerModal = function() {
+      document.getElementById('customerModal').classList.add('hidden');
+    };
+
+    // Sinkronisasi Otomatis Jatuh Tempo Dari Tanggal Pemasangan (1-31)
+    window.autoSyncDueDateFromInstallDate = function() {
+      const installDateVal = document.getElementById('custFormInstallDate').value;
+      if (installDateVal) {
+        const dayNumber = new Date(installDateVal).getDate();
+        if (!isNaN(dayNumber)) {
+          document.getElementById('custFormDueDate').value = dayNumber;
+        }
+      }
+    };
+
+    window.autoFillPackagePrice = function() {
+      const pkg = document.getElementById('custFormPackage').value;
+      const priceMap = {
+        '10 Mbps': 100000,
+        '20 Mbps': 150000,
+        '30 Mbps': 200000,
+        '50 Mbps': 300000
+      };
+      document.getElementById('custFormPrice').value = priceMap[pkg] || 150000;
+    };
+
+    window.saveCustomerData = function(e) {
+      e.preventDefault();
+      const mode = document.getElementById('custFormMode').value;
+      const id = document.getElementById('custFormId').value;
+      
+      const newCust = {
+        id: id,
+        name: document.getElementById('custFormName').value.trim(),
+        phone: document.getElementById('custFormPhone').value.trim(),
+        area: document.getElementById('custFormArea').value.trim() || "Banyumas",
+        address: document.getElementById('custFormAddress').value.trim(),
+        package: document.getElementById('custFormPackage').value,
+        price: parseInt(document.getElementById('custFormPrice').value) || 0,
+        installDate: document.getElementById('custFormInstallDate').value,
+        dueDate: parseInt(document.getElementById('custFormDueDate').value) || 20,
+        status: document.getElementById('custFormStatus').value,
+        billStatus: document.getElementById('custFormBillStatus').value,
+        notes: document.getElementById('custFormNotes').value.trim()
+      };
+
+      if (mode === 'create') {
+        appState.customers.unshift(newCust);
+      } else {
+        const index = appState.customers.findIndex(c => c.id === id);
+        if (index !== -1) {
+          appState.customers[index] = newCust;
+        }
+      }
+
+      saveStateToStorage();
+      closeCustomerModal();
+      renderCustomerTable();
+      renderDashboard();
+      renderMatrixTable();
+    };
+
+    window.editCustomer = function(id) {
+      const c = appState.customers.find(item => item.id === id);
+      if (!c) return;
+
+      document.getElementById('custFormMode').value = 'edit';
+      document.getElementById('custModalTitle').innerText = 'Ubah Data Pelanggan';
+      
+      document.getElementById('custFormId').value = c.id;
+      document.getElementById('custFormName').value = c.name;
+      document.getElementById('custFormPhone').value = c.phone;
+      document.getElementById('custFormArea').value = c.area || "";
+      document.getElementById('custFormAddress').value = c.address;
+      document.getElementById('custFormPackage').value = c.package;
+      document.getElementById('custFormPrice').value = c.price;
+      document.getElementById('custFormInstallDate').value = c.installDate || "";
+      document.getElementById('custFormDueDate').value = c.dueDate;
+      document.getElementById('custFormStatus').value = c.status;
+      document.getElementById('custFormBillStatus').value = c.billStatus;
+      document.getElementById('custFormNotes').value = c.notes || "";
+
+      document.getElementById('customerModal').classList.remove('hidden');
+    };
+
+    window.viewCustomerDetail = function(id) {
+      const c = appState.customers.find(item => item.id === id);
+      if (!c) return;
+
+      const body = document.getElementById('customerDetailBody');
+      const badgeClass = c.billStatus === 'Lunas' ? 'bg-emerald-100 text-emerald-800' :
+                         (c.billStatus === 'Isolir' ? 'bg-purple-100 text-purple-800' : 
+                         (c.billStatus === 'Menunggak' ? 'bg-rose-100 text-rose-800' : 'bg-amber-100 text-amber-800'));
+
+      body.innerHTML = `
+        <div class="p-3 bg-slate-50 rounded-xl border border-slate-100 flex items-center justify-between">
+          <div>
+            <span class="font-mono text-indigo-600 font-bold">${c.id}</span>
+            <h4 class="text-sm font-bold text-slate-900">${c.name}</h4>
+          </div>
+          <span class="px-2.5 py-1 rounded-full font-bold text-[10px] ${badgeClass}">${c.billStatus}</span>
+        </div>
+        <div class="space-y-2 py-1">
+          <div class="flex justify-between border-b border-slate-100 pb-1.5">
+            <span class="text-slate-500">Nomor WhatsApp:</span>
+            <span class="font-bold text-slate-800">${c.phone}</span>
+          </div>
+          <div class="flex justify-between border-b border-slate-100 pb-1.5">
+            <span class="text-slate-500">Alamat Pemasangan:</span>
+            <span class="font-medium text-slate-800 text-right max-w-xs">${c.address}</span>
+          </div>
+          <div class="flex justify-between border-b border-slate-100 pb-1.5">
+            <span class="text-slate-500">Paket & Tagihan:</span>
+            <span class="font-bold text-indigo-700">${c.package} - ${formatRupiah(c.price)}/bln</span>
+          </div>
+          <div class="flex justify-between border-b border-slate-100 pb-1.5">
+            <span class="text-slate-500">Tanggal Pemasangan:</span>
+            <span class="font-semibold text-slate-700">${c.installDate || '-'}</span>
+          </div>
+          <div class="flex justify-between border-b border-slate-100 pb-1.5">
+            <span class="text-slate-500">Jatuh Tempo Bulanan:</span>
+            <span class="font-bold text-rose-600">Setiap Tanggal ${c.dueDate}</span>
+          </div>
+          <div class="flex justify-between border-b border-slate-100 pb-1.5">
+            <span class="text-slate-500">Catatan Perangkat:</span>
+            <span class="font-mono text-slate-600">${c.notes || 'Tidak ada catatan'}</span>
+          </div>
+        </div>
+      `;
+
+      const actionArea = document.getElementById('custDetailActionArea');
+      actionArea.innerHTML = `
+        <button onclick="quickPayFromTable('${c.id}', 1)" class="py-1.5 px-3 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs">Bayar 1B</button>
+        <button onclick="quickPayFromTable('${c.id}', 6)" class="py-1.5 px-3 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs">Bayar 6B</button>
+      `;
+
+      document.getElementById('customerDetailModal').classList.remove('hidden');
+    };
+
+    window.closeCustomerDetailModal = function() {
+      document.getElementById('customerDetailModal').classList.add('hidden');
+    };
+
+    window.deleteCustomer = function(id) {
+      const c = appState.customers.find(item => item.id === id);
+      if (!c) return;
+
+      customConfirm("Hapus Pelanggan", `Apakah Anda yakin ingin menghapus data pelanggan ${c.name} (${c.id})?`, () => {
+        appState.customers = appState.customers.filter(item => item.id !== id);
+        saveStateToStorage();
+        renderCustomerTable();
+        renderDashboard();
+        renderMatrixTable();
+      });
+    };
+
+    /* -------------------------------------------------------------
+       CSV EKSPOR, IMPOR, & TEMPLATE
+       ------------------------------------------------------------- */
+    window.downloadCustomerTemplateCSV = function() {
+      const csvContent = "data:text/csv;charset=utf-8,ID,Nama,WhatsApp,Wilayah,Alamat,Paket,Harga,Tanggal_Pemasangan,Jatuh_Tempo,Status,Status_Tagihan,Catatan\n" +
+                         "JDI-099,Contoh Nama,081299998888,RT 010 Banyumas,Jl. AMD No. 99,20 Mbps,150000,2026-09-01,1,Aktif,Belum Bayar,ONT Port 1";
+      const encodedUri = encodeURI(csvContent);
+      const link = document.createElement("a");
+      link.setAttribute("href", encodedUri);
+      link.setAttribute("download", "Template_Pelanggan_JalurData.csv");
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    };
+
+    window.exportCustomerCSV = function() {
+      let csv = "ID,Nama,WhatsApp,Wilayah,Alamat,Paket,Harga,Tanggal_Pasang,Jatuh_Tempo,Status,Status_Tagihan,Catatan\n";
+      appState.customers.forEach(c => {
+        csv += `"${c.id}","${c.name}","${c.phone}","${c.area}","${c.address}","${c.package}","${c.price}","${c.installDate}","${c.dueDate}","${c.status}","${c.billStatus}","${c.notes || ''}"\n`;
+      });
+      const encodedUri = encodeURI("data:text/csv;charset=utf-8," + csv);
+      const link = document.createElement("a");
+      link.setAttribute("href", encodedUri);
+      link.setAttribute("download", `Data_Pelanggan_${appState.company.name.replace(/\s+/g, '_')}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    };
+
+    window.importCustomerCSV = function(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const text = e.target.result;
+        const lines = text.split('\n');
+        let importedCount = 0;
+
+        for (let i = 1; i < lines.length; i++) {
+          const line = lines[i].trim();
+          if (!line) continue;
+          const parts = line.split(',').map(s => s.replace(/^"|"$/g, '').trim());
+          if (parts.length >= 7) {
+            const nextId = "JDI-" + String(appState.customers.length + 1).padStart(3, '0');
+            appState.customers.push({
+              id: parts[0] || nextId,
+              name: parts[1] || "Pelanggan Impor",
+              phone: parts[2] || "081200000000",
+              area: parts[3] || "Banyumas",
+              address: parts[4] || "Alamat",
+              package: parts[5] || "20 Mbps",
+              price: parseInt(parts[6]) || 150000,
+              installDate: parts[7] || "2026-09-01",
+              dueDate: parseInt(parts[8]) || 1,
+              status: parts[9] || "Aktif",
+              billStatus: parts[10] || "Belum Bayar",
+              notes: parts[11] || ""
+            });
+            importedCount++;
+          }
+        }
+
+        saveStateToStorage();
+        renderCustomerTable();
+        renderDashboard();
+        renderMatrixTable();
+        alert(`Berhasil mengimpor ${importedCount} data pelanggan dari CSV.`);
+      };
+      reader.readAsText(file);
+    };
+
+    /* -------------------------------------------------------------
+       VIEW 3: MATRIKS TAGIHAN TAHUNAN
+       ------------------------------------------------------------- */
+    window.renderMatrixTable = function() {
+      const tbody = document.getElementById('matrixTableBody');
+      const search = (document.getElementById('matrixSearchInput')?.value || '').toLowerCase();
+      tbody.innerHTML = '';
+
+      const filtered = appState.customers.filter(c => c.name.toLowerCase().includes(search));
+
+      filtered.forEach(c => {
+        let rowHtml = `<tr><td class="p-2.5 text-left font-bold text-slate-800 border-r border-slate-200 bg-slate-50">${c.name}</td>`;
+        
+        // 12 Bulan (Jan s/d Des)
+        for (let m = 1; m <= 12; m++) {
+          let color = "bg-slate-200 text-slate-600";
+          let label = "–";
+
+          if (c.status === "Nonaktif") {
+            color = "bg-slate-300 text-slate-600";
+            label = "Off";
+          } else if (m < 9) {
+            color = "bg-emerald-500 text-white font-bold";
+            label = "L";
+          } else if (m === 9) {
+            // Bulan September (Bulan Berjalan)
+            if (c.billStatus === "Lunas") {
+              color = "bg-emerald-500 text-white font-bold";
+              label = "L";
+            } else if (c.billStatus === "Belum Bayar") {
+              color = "bg-amber-400 text-amber-950 font-bold";
+              label = "B";
+            } else if (c.billStatus === "Menunggak") {
+              color = "bg-rose-500 text-white font-bold";
+              label = "M";
+            } else if (c.billStatus === "Isolir") {
+              color = "bg-purple-600 text-white font-bold";
+              label = "ISO";
+            } else {
+              color = "bg-amber-400 text-amber-950 font-bold";
+              label = "W";
+            }
+          } else {
+            color = "bg-slate-100 text-slate-400";
+            label = "–";
+          }
+
+          rowHtml += `
+            <td class="p-1 border border-slate-100">
+              <span class="inline-block w-8 py-1 rounded text-[11px] ${color} cursor-pointer shadow-xs" title="Bulan ${m}: ${c.name}" onclick="quickPayFromTable('${c.id}', 1)">
+                ${label}
+              </span>
+            </td>
+          `;
+        }
+
+        rowHtml += `</tr>`;
+        tbody.innerHTML += rowHtml;
+      });
+    };
+
+    /* -------------------------------------------------------------
+       VIEW 4: FORM PEMBAYARAN, 1B/6B/12B, AUTO-CLOSE MODAL
+       ------------------------------------------------------------- */
+    window.openPaymentModal = function(clientId = null, duration = 1) {
+      const select = document.getElementById('payClientId');
+      select.innerHTML = '<option value="">-- Pilih Pelanggan --</option>';
+      
+      appState.customers.forEach(c => {
+        const opt = document.createElement('option');
+        opt.value = c.id;
+        opt.innerText = `${c.name} (${c.id}) - ${c.package} [${c.billStatus}]`;
+        select.appendChild(opt);
+      });
+
+      const today = new Date().toISOString().split('T')[0];
+      document.getElementById('payDate').value = today;
+
+      if (clientId) {
+        select.value = clientId;
+        onPaymentCustomerSelected();
+      } else {
+        document.getElementById('payAmount').value = "";
+        document.getElementById('payPeriodPreview').innerText = "September 2026";
+      }
+
+      setPaymentDuration(duration);
+      document.getElementById('paymentModal').classList.remove('hidden');
+    };
+
+    window.closePaymentModal = function() {
+      document.getElementById('paymentModal').classList.add('hidden');
+    };
+
+    window.quickPayFromTable = function(clientId, duration = 1) {
+      openPaymentModal(clientId, duration);
+    };
+
+    window.setPaymentDuration = function(months) {
+      document.getElementById('payDurationVal').value = months;
+      
+      // Update styling tombol aktif
+      const b1 = document.getElementById('btnDur1');
+      const b6 = document.getElementById('btnDur6');
+      const b12 = document.getElementById('btnDur12');
+
+      [b1, b6, b12].forEach(btn => {
+        btn.classList.remove('border-2', 'border-indigo-600', 'bg-indigo-50', 'text-indigo-700');
+        btn.classList.add('border', 'border-slate-200', 'bg-white', 'text-slate-700');
+      });
+
+      if (months === 1) {
+        b1.classList.add('border-2', 'border-indigo-600', 'bg-indigo-50', 'text-indigo-700');
+      } else if (months === 6) {
+        b6.classList.add('border-2', 'border-indigo-600', 'bg-indigo-50', 'text-indigo-700');
+      } else if (months === 12) {
+        b12.classList.add('border-2', 'border-indigo-600', 'bg-indigo-50', 'text-indigo-700');
+      }
+
+      updatePaymentAmountAndPeriod();
+    };
+
+    window.onPaymentCustomerSelected = function() {
+      updatePaymentAmountAndPeriod();
+    };
+
+    function updatePaymentAmountAndPeriod() {
+      const clientId = document.getElementById('payClientId').value;
+      const duration = parseInt(document.getElementById('payDurationVal').value) || 1;
+      const c = appState.customers.find(item => item.id === clientId);
+
+      if (c) {
+        const total = c.price * duration;
+        document.getElementById('payAmount').value = total;
+
+        let periodText = "September 2026";
+        if (duration === 6) periodText = "September 2026 s/d Februari 2027 (6 Bulan)";
+        else if (duration === 12) periodText = "September 2026 s/d Agustus 2027 (12 Bulan / 1 Tahun)";
+        document.getElementById('payPeriodPreview').innerText = periodText;
+      }
+    }
+
+    window.submitPaymentData = function(e) {
+      e.preventDefault();
+      const clientId = document.getElementById('payClientId').value;
+      const duration = parseInt(document.getElementById('payDurationVal').value) || 1;
+      const amount = parseInt(document.getElementById('payAmount').value) || 0;
+      const date = document.getElementById('payDate').value;
+      const method = document.getElementById('payMethod').value;
+      const notes = document.getElementById('payNotes').value.trim();
+
+      const c = appState.customers.find(item => item.id === clientId);
+      if (!c) {
+        alert("Silakan pilih pelanggan terlebih dahulu.");
+        return;
+      }
+
+      let periodText = "September 2026";
+      if (duration === 6) periodText = "September 2026 s/d Februari 2027 (6 Bulan)";
+      else if (duration === 12) periodText = "September 2026 s/d Agustus 2027 (1 Tahun)";
+
+      const receiptId = "KW-26" + String(appState.payments.length + 1).padStart(4, '0');
+
+      const paymentObj = {
+        id: receiptId,
+        clientId: c.id,
+        clientName: c.name,
+        package: c.package,
+        period: periodText,
+        duration: duration,
+        amount: amount,
+        date: date,
+        method: method,
+        status: "Lunas",
+        notes: notes || `Pembayaran paket ${duration} bulan`
+      };
+
+      // 1. Simpan Transaksi Pembayaran
+      appState.payments.unshift(paymentObj);
+
+      // 2. Otomatis Update Status Tagihan Pelanggan Jadi Lunas
+      c.billStatus = "Lunas";
+
+      // 3. Masukkan ke Buku Kas Masuk Otomatis
+      appState.kas.unshift({
+        id: Date.now(),
+        type: "masuk",
+        date: date,
+        category: "Iuran Pelanggan",
+        ref: `${c.name} (${c.id})`,
+        amount: amount,
+        desc: `Pembayaran ${periodText} via ${method}`
+      });
+
+      saveStateToStorage();
+
+      // 4. Tutup Modal Input Pembayaran Seketika Sesuai Permintaan
+      closePaymentModal();
+
+      // 5. Render Pembaruan
+      renderDashboard();
+      renderCustomerTable();
+      renderMatrixTable();
+      renderPaymentHistory();
+      renderKasTables();
+      renderMonthlyReport();
+
+      // 6. Buka Dialog Konfirmasi Sukses dengan Timer Auto-Close
+      activeReceiptData = paymentObj;
+      openPaymentSuccessModal();
+    };
+
+    window.openPaymentSuccessModal = function() {
+      const modal = document.getElementById('paymentSuccessModal');
+      document.getElementById('paySuccessMsg').innerText = `Iuran ${activeReceiptData.clientName} sebesar ${formatRupiah(activeReceiptData.amount)} berhasil dicatat.`;
+      modal.classList.remove('hidden');
+
+      let countdown = 4;
+      document.getElementById('successCountdown').innerText = countdown;
+
+      if (autoCloseTimer) clearInterval(autoCloseTimer);
+      autoCloseTimer = setInterval(() => {
+        countdown--;
+        document.getElementById('successCountdown').innerText = countdown;
+        if (countdown <= 0) {
+          clearInterval(autoCloseTimer);
+          closePaymentSuccessModal();
+        }
+      }, 1000);
+    };
+
+    window.closePaymentSuccessModal = function() {
+      if (autoCloseTimer) clearInterval(autoCloseTimer);
+      document.getElementById('paymentSuccessModal').classList.add('hidden');
+    };
+
+    window.openLatestReceipt = function() {
+      closePaymentSuccessModal();
+      if (activeReceiptData) {
+        showReceiptModal(activeReceiptData);
+      }
+    };
+
+    /* -------------------------------------------------------------
+       KUITANSI NOTA RESMI & PRINTING
+       ------------------------------------------------------------- */
+    window.openReceiptModalById = function(paymentId) {
+      const p = appState.payments.find(item => item.id === paymentId);
+      if (p) showReceiptModal(p);
+    };
+
+    function showReceiptModal(p) {
+      activeReceiptData = p;
+      document.getElementById('rcReceiptNo').innerText = p.id;
+      document.getElementById('rcDate').innerText = p.date;
+      document.getElementById('rcClientName').innerText = p.clientName;
+      document.getElementById('rcClientId').innerText = p.clientId;
+      document.getElementById('rcPackage').innerText = p.package;
+      document.getElementById('rcPeriod').innerText = p.period;
+      document.getElementById('rcMethod').innerText = p.method;
+      document.getElementById('rcAmount').innerText = formatRupiah(p.amount);
+      document.getElementById('rcAuthCode').innerText = Math.floor(100000 + Math.random() * 900000);
+
+      document.getElementById('receiptModal').classList.remove('hidden');
+    }
+
+    window.closeReceiptModal = function() {
+      document.getElementById('receiptModal').classList.add('hidden');
+    };
+
+    window.printCurrentReceipt = function() {
+      document.body.classList.remove('printing-report');
+      document.body.classList.add('printing-receipt');
+      window.print();
+    };
+
+    window.sendReceiptWhatsApp = function() {
+      if (!activeReceiptData) return;
+      const c = appState.customers.find(item => item.id === activeReceiptData.clientId);
+      if (!c) return;
+
+      let msg = appState.waTemplates.thanks
+        .replace(/{{nama_pelanggan}}/g, activeReceiptData.clientName)
+        .replace(/{{nominal}}/g, formatRupiah(activeReceiptData.amount))
+        .replace(/{{periode}}/g, activeReceiptData.period)
+        .replace(/{{no_kwitansi}}/g, activeReceiptData.id)
+        .replace(/{{tgl_bayar}}/g, activeReceiptData.date);
+
+      logWhatsAppSent(c.name, c.phone, "Konfirmasi Pembayaran", "Terkirim");
+      const phoneClean = c.phone.replace(/^0/, '62');
+      window.open(`https://wa.me/${phoneClean}?text=${encodeURIComponent(msg)}`, '_blank');
+    };
+
+    window.renderPaymentHistory = function() {
+      const tbody = document.getElementById('paymentHistoryBody');
+      tbody.innerHTML = '';
+
+      if (appState.payments.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="8" class="p-6 text-center text-slate-400">Belum ada data riwayat pembayaran.</td></tr>`;
+        return;
+      }
+
+      appState.payments.forEach(p => {
+        tbody.innerHTML += `
+          <tr class="hover:bg-slate-50/80 transition-colors">
+            <td class="p-3.5 font-mono font-bold text-indigo-700">${p.id}</td>
+            <td class="p-3.5 font-bold text-slate-900">${p.clientName}</td>
+            <td class="p-3.5 text-slate-700">${p.period}</td>
+            <td class="p-3.5 font-bold text-emerald-700">${formatRupiah(p.amount)}</td>
+            <td class="p-3.5 text-slate-500">${p.date}</td>
+            <td class="p-3.5"><span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-slate-100 text-slate-800">${p.method}</span></td>
+            <td class="p-3.5"><span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800">${p.status}</span></td>
+            <td class="p-3.5 text-center">
+              <button onclick="openReceiptModalById('${p.id}')" class="px-3 py-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold rounded-lg text-xs">
+                <i class="fa-solid fa-receipt mr-1"></i> Kuitansi
+              </button>
+            </td>
+          </tr>
+        `;
+      });
+    };
+
+    window.exportPaymentsCSV = function() {
+      let csv = "No_Kwitansi,ID_Pelanggan,Nama_Pelanggan,Paket,Periode,Nominal,Tanggal_Bayar,Metode,Status\n";
+      appState.payments.forEach(p => {
+        csv += `"${p.id}","${p.clientId}","${p.clientName}","${p.package}","${p.period}","${p.amount}","${p.date}","${p.method}","${p.status}"\n`;
+      });
+      const encodedUri = encodeURI("data:text/csv;charset=utf-8," + csv);
+      const link = document.createElement("a");
+      link.setAttribute("href", encodedUri);
+      link.setAttribute("download", `Riwayat_Pembayaran_${appState.company.name.replace(/\s+/g, '_')}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    };
+
+    /* -------------------------------------------------------------
+       VIEW 5 & 6: KAS MASUK & KAS KELUAR
+       ------------------------------------------------------------- */
+    window.renderKasTables = function() {
+      const masukBody = document.getElementById('kasMasukTableBody');
+      const keluarBody = document.getElementById('kasKeluarTableBody');
+      masukBody.innerHTML = '';
+      keluarBody.innerHTML = '';
+
+      const kasMasuk = appState.kas.filter(k => k.type === 'masuk');
+      const kasKeluar = appState.kas.filter(k => k.type === 'keluar');
+
+      if (kasMasuk.length === 0) {
+        masukBody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-slate-400">Belum ada kas masuk tercatat.</td></tr>`;
+      } else {
+        kasMasuk.forEach(k => {
+          masukBody.innerHTML += `
+            <tr class="hover:bg-slate-50">
+              <td class="p-3.5 text-slate-500">${k.date}</td>
+              <td class="p-3.5"><span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-700">${k.category}</span></td>
+              <td class="p-3.5 font-semibold text-slate-800">${k.ref}</td>
+              <td class="p-3.5 text-slate-600">${k.desc || '-'}</td>
+              <td class="p-3.5 text-right font-black text-emerald-600">${formatRupiah(k.amount)}</td>
+            </tr>
+          `;
+        });
+      }
+
+      if (kasKeluar.length === 0) {
+        keluarBody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-slate-400">Belum ada kas keluar tercatat.</td></tr>`;
+      } else {
+        kasKeluar.forEach(k => {
+          keluarBody.innerHTML += `
+            <tr class="hover:bg-slate-50">
+              <td class="p-3.5 text-slate-500">${k.date}</td>
+              <td class="p-3.5"><span class="px-2 py-0.5 rounded text-[10px] font-bold bg-rose-50 text-rose-700">${k.category}</span></td>
+              <td class="p-3.5 font-semibold text-slate-800">${k.ref}</td>
+              <td class="p-3.5 text-slate-600">${k.desc || '-'}</td>
+              <td class="p-3.5 text-right font-black text-rose-600">${formatRupiah(k.amount)}</td>
+            </tr>
+          `;
+        });
+      }
+    };
+
+    window.openKasModal = function(type) {
+      document.getElementById('kasType').value = type;
+      const today = new Date().toISOString().split('T')[0];
+      document.getElementById('kasDate').value = today;
+      document.getElementById('kasAmount').value = "";
+      document.getElementById('kasRef').value = "";
+      document.getElementById('kasDesc').value = "";
+
+      const catSelect = document.getElementById('kasCategory');
+      catSelect.innerHTML = '';
+
+      if (type === 'masuk') {
+        document.getElementById('kasModalTitle').innerText = 'Tambah Kas Masuk (Pemasukan)';
+        document.getElementById('kasLabelRef').innerText = 'Sumber Pemasukan *';
+        document.getElementById('kasSubmitBtn').className = 'py-2.5 px-6 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-md';
+        ['Iuran Pelanggan', 'Biaya Pemasangan Baru', 'Penjualan Voucher WiFi', 'Lain-lain'].forEach(c => {
+          catSelect.innerHTML += `<option value="${c}">${c}</option>`;
+        });
+      } else {
+        document.getElementById('kasModalTitle').innerText = 'Catat Kas Keluar (Pengeluaran)';
+        document.getElementById('kasLabelRef').innerText = 'Penerima Pembayaran *';
+        document.getElementById('kasSubmitBtn').className = 'py-2.5 px-6 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold shadow-md';
+        ['Bandwidth ISP Induk', 'Listrik & PLN', 'Maintenance Jaringan', 'Perangkat & Router/ONT', 'Gaji & Uang Bensin Teknisi', 'Operasional Kantor'].forEach(c => {
+          catSelect.innerHTML += `<option value="${c}">${c}</option>`;
+        });
+      }
+
+      document.getElementById('kasModal').classList.remove('hidden');
+    };
+
+    window.closeKasModal = function() {
+      document.getElementById('kasModal').classList.add('hidden');
+    };
+
+    window.saveKasTransaction = function(e) {
+      e.preventDefault();
+      const type = document.getElementById('kasType').value;
+      const date = document.getElementById('kasDate').value;
+      const category = document.getElementById('kasCategory').value;
+      const ref = document.getElementById('kasRef').value.trim();
+      const amount = parseInt(document.getElementById('kasAmount').value) || 0;
+      const desc = document.getElementById('kasDesc').value.trim();
+
+      appState.kas.unshift({
+        id: Date.now(),
+        type: type,
+        date: date,
+        category: category,
+        ref: ref,
+        amount: amount,
+        desc: desc
+      });
+
+      saveStateToStorage();
+      closeKasModal();
+      renderKasTables();
+      renderDashboard();
+      renderMonthlyReport();
+    };
+
+    /* -------------------------------------------------------------
+       VIEW 7: LAPORAN BULANAN HASIL PELANGGAN & EKSPOR PDF
+       ------------------------------------------------------------- */
+    window.renderMonthlyReport = function() {
+      const month = parseInt(document.getElementById('reportMonthSelect')?.value || 9);
+      const year = parseInt(document.getElementById('reportYearSelect')?.value || 2026);
+      const method = document.getElementById('reportMethodFilter')?.value || 'all';
+
+      const monthNames = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+      const periodString = `${monthNames[month - 1]} ${year}`;
+
+      document.getElementById('reportDisplayPeriod').innerText = periodString;
+      const todayStr = new Date().toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' });
+      document.getElementById('reportPrintDate').innerText = todayStr;
+      document.getElementById('signatureDate').innerText = todayStr;
+
+      // Filter Pembayaran
+      const filteredPayments = appState.payments.filter(p => {
+        const matchesMethod = method === 'all' || p.method === method;
+        return matchesMethod;
+      });
+
+      const totalPaid = filteredPayments.reduce((acc, curr) => acc + curr.amount, 0);
+      const totalExpense = appState.kas.filter(k => k.type === 'keluar').reduce((acc, curr) => acc + curr.amount, 0);
+      const netProfit = totalPaid - totalExpense;
+
+      document.getElementById('reportTotalPaid').innerText = formatRupiah(totalPaid);
+      document.getElementById('reportPaidClientCount').innerText = `${filteredPayments.length} Pelanggan Membayar`;
+      document.getElementById('reportTotalExpense').innerText = formatRupiah(totalExpense);
+      document.getElementById('reportNetProfit').innerText = formatRupiah(netProfit);
+      document.getElementById('reportTableFooterTotal').innerText = formatRupiah(totalPaid);
+
+      // Render Tabel Pelanggan Membayar
+      const tbody = document.getElementById('reportPaidTableBody');
+      tbody.innerHTML = '';
+
+      if (filteredPayments.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="8" class="p-4 text-center text-slate-400">Tidak ada data setoran pelanggan pada filter ini.</td></tr>`;
+        return;
+      }
+
+      filteredPayments.forEach((p, idx) => {
+        tbody.innerHTML += `
+          <tr class="hover:bg-slate-50 text-slate-700">
+            <td class="p-2 border-r border-slate-200 text-center font-mono">${idx + 1}</td>
+            <td class="p-2 border-r border-slate-200 font-mono font-bold">${p.id}</td>
+            <td class="p-2 border-r border-slate-200 font-bold">${p.clientName} <span class="text-slate-400 font-normal">(${p.clientId})</span></td>
+            <td class="p-2 border-r border-slate-200">${p.package}</td>
+            <td class="p-2 border-r border-slate-200">${p.period}</td>
+            <td class="p-2 border-r border-slate-200">${p.date}</td>
+            <td class="p-2 border-r border-slate-200"><span class="px-1.5 py-0.5 rounded text-[10px] bg-slate-100">${p.method}</span></td>
+            <td class="p-2 text-right font-black text-emerald-700">${formatRupiah(p.amount)}</td>
+          </tr>
+        `;
+      });
+    };
+
+    window.printMonthlyReport = function() {
+      document.body.classList.remove('printing-receipt');
+      document.body.classList.add('printing-report');
+      window.print();
+    };
+
+    window.exportMonthlyReportToPDF = function() {
+      const element = document.getElementById('printableReportArea');
+      const opt = {
+        margin:       [10, 10, 10, 10],
+        filename:     `Laporan_Bulanan_${appState.company.name.replace(/\s+/g, '_')}.pdf`,
+        image:        { type: 'jpeg', quality: 0.98 },
+        html2canvas:  { scale: 2, useCORS: true },
+        jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+      };
+
+      html2pdf().set(opt).from(element).save();
+    };
+
+    /* -------------------------------------------------------------
+       VIEW 8: WHATSAPP NOTIFIKASI & LOG
+       ------------------------------------------------------------- */
+    function loadWhatsAppView() {
+      document.getElementById('waBillingTemplate').value = appState.waTemplates.billing;
+      document.getElementById('waThanksTemplate').value = appState.waTemplates.thanks;
+      renderWaLogs();
+    }
+
+    window.saveWhatsAppTemplates = function() {
+      appState.waTemplates.billing = document.getElementById('waBillingTemplate').value;
+      appState.waTemplates.thanks = document.getElementById('waThanksTemplate').value;
+      saveStateToStorage();
+      alert("Template pesan WhatsApp berhasil disimpan.");
+    };
+
+    window.sendSingleWaReminder = function(clientId) {
+      const c = appState.customers.find(item => item.id === clientId);
+      if (!c) return;
+
+      let msg = appState.waTemplates.billing
+        .replace(/{{nama_pelanggan}}/g, c.name)
+        .replace(/{{id_pelanggan}}/g, c.id)
+        .replace(/{{paket}}/g, c.package)
+        .replace(/{{nominal}}/g, formatRupiah(c.price))
+        .replace(/{{jatuh_tempo}}/g, `Tgl ${c.dueDate}`)
+        .replace(/{{periode}}/g, "September 2026")
+        .replace(/{{rekening_pembayaran}}/g, appState.company.bankAccounts);
+
+      logWhatsAppSent(c.name, c.phone, "Tagihan Bulanan", "Terkirim");
+      const phoneClean = c.phone.replace(/^0/, '62');
+      window.open(`https://wa.me/${phoneClean}?text=${encodeURIComponent(msg)}`, '_blank');
+    };
+
+    window.blastWhatsAppUnpaid = function() {
+      const unpaid = appState.customers.filter(c => c.billStatus === 'Belum Bayar' || c.billStatus === 'Menunggak' || c.billStatus === 'Isolir');
+      if (unpaid.length === 0) {
+        alert("Semua pelanggan telah lunas! Tidak ada tagihan yang perlu dikirim.");
+        return;
+      }
+
+      customConfirm("Kirim Tagihan Massal", `Kirim pesan penagihan otomatis ke ${unpaid.length} pelanggan yang belum lunas?`, () => {
+        unpaid.forEach((c, idx) => {
+          setTimeout(() => {
+            logWhatsAppSent(c.name, c.phone, "Broadcast Penagihan", "Terkirim");
+          }, idx * 200);
+        });
+        alert(`Berhasil membuat antrean broadcast ke ${unpaid.length} nomor pelanggan!`);
+        renderWaLogs();
+      });
+    };
+
+    function logWhatsAppSent(name, phone, type, status) {
+      appState.waLogs.unshift({
+        id: Date.now(),
+        name: name,
+        phone: phone,
+        type: type,
+        time: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) + " WIB",
+        status: status
+      });
+      saveStateToStorage();
+      renderWaLogs();
+    }
+
+    function renderWaLogs() {
+      const list = document.getElementById('waLogList');
+      if (!list) return;
+      list.innerHTML = '';
+
+      if (appState.waLogs.length === 0) {
+        list.innerHTML = `<div class="text-center py-6 text-slate-400">Belum ada riwayat pesan WA terkirim.</div>`;
+        return;
+      }
+
+      appState.waLogs.slice(0, 15).forEach(l => {
+        list.innerHTML += `
+          <div class="p-2.5 bg-slate-50 rounded-xl border border-slate-100 flex items-center justify-between">
+            <div>
+              <p class="font-bold text-slate-800">${l.name}</p>
+              <p class="text-[10px] text-slate-500">${l.type} • ${l.phone}</p>
+            </div>
+            <div class="text-right">
+              <span class="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded">${l.status}</span>
+              <p class="text-[9px] text-slate-400 mt-0.5">${l.time}</p>
+            </div>
+          </div>
+        `;
+      });
+    }
+
+    window.clearWaLogs = function() {
+      appState.waLogs = [];
+      saveStateToStorage();
+      renderWaLogs();
+    };
+
+    /* -------------------------------------------------------------
+       VIEW 9: PENGATURAN USAHA & REKENING (BCA & SEABANK)
+       ------------------------------------------------------------- */
+    function loadSettingsView() {
+      document.getElementById('setCompanyName').value = appState.company.name;
+      document.getElementById('setCompanyPhone').value = appState.company.phone;
+      document.getElementById('setCompanyAddress').value = appState.company.address;
+      document.getElementById('setBankAccounts').value = appState.company.bankAccounts;
+      document.getElementById('setDefaultDueDate').value = appState.company.defaultDueDate || 20;
+    }
+
+    window.saveCompanySettings = function(e) {
+      e.preventDefault();
+      appState.company = {
+        name: document.getElementById('setCompanyName').value.trim(),
+        phone: document.getElementById('setCompanyPhone').value.trim(),
+        address: document.getElementById('setCompanyAddress').value.trim(),
+        bankAccounts: document.getElementById('setBankAccounts').value.trim(),
+        defaultDueDate: parseInt(document.getElementById('setDefaultDueDate').value) || 20
+      };
+
+      saveStateToStorage();
+      initBranding();
+      renderMonthlyReport();
+      alert("Pengaturan profil usaha dan rekening berhasil diperbarui!");
+    };
+
+    /* -------------------------------------------------------------
+       DIALOG KONFIRMASI KUSTOM
+       ------------------------------------------------------------- */
+    function customConfirm(title, message, callback) {
+      document.getElementById('confirmTitle').innerText = title;
+      document.getElementById('confirmMessage').innerText = message;
+      confirmCallback = callback;
+      document.getElementById('confirmModal').classList.remove('hidden');
+    }
+
+    window.closeConfirmModal = function(isConfirmed) {
+      document.getElementById('confirmModal').classList.add('hidden');
+      if (isConfirmed && typeof confirmCallback === 'function') {
+        confirmCallback();
+      }
+      confirmCallback = null;
+    };
+  </script>
+</body>
+</html>
